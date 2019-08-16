@@ -11,8 +11,8 @@
 
 namespace Symfony\Component\Form\Tests\Extension\Core\DataTransformer;
 
-use Symfony\Component\Form\Extension\Core\DataTransformer\DateTimeZoneToStringTransformer;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Form\Extension\Core\DataTransformer\DateTimeZoneToStringTransformer;
 
 class DateTimeZoneToStringTransformerTest extends TestCase
 {
@@ -34,23 +34,19 @@ class DateTimeZoneToStringTransformerTest extends TestCase
         $this->assertNull($transformer->transform(null));
         $this->assertNull($transformer->reverseTransform(null));
 
-        $this->assertSame(array('Europe/Amsterdam'), $transformer->transform(array(new \DateTimeZone('Europe/Amsterdam'))));
-        $this->assertEquals(array(new \DateTimeZone('Europe/Amsterdam')), $transformer->reverseTransform(array('Europe/Amsterdam')));
+        $this->assertSame(['Europe/Amsterdam'], $transformer->transform([new \DateTimeZone('Europe/Amsterdam')]));
+        $this->assertEquals([new \DateTimeZone('Europe/Amsterdam')], $transformer->reverseTransform(['Europe/Amsterdam']));
     }
 
-    /**
-     * @expectedException \Symfony\Component\Form\Exception\TransformationFailedException
-     */
     public function testInvalidTimezone()
     {
+        $this->expectException('Symfony\Component\Form\Exception\TransformationFailedException');
         (new DateTimeZoneToStringTransformer())->transform(1);
     }
 
-    /**
-     * @expectedException \Symfony\Component\Form\Exception\TransformationFailedException
-     */
     public function testUnknownTimezone()
     {
-        (new DateTimeZoneToStringTransformer(true))->reverseTransform(array('Foo/Bar'));
+        $this->expectException('Symfony\Component\Form\Exception\TransformationFailedException');
+        (new DateTimeZoneToStringTransformer(true))->reverseTransform(['Foo/Bar']);
     }
 }

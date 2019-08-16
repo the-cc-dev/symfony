@@ -20,7 +20,7 @@ class JsonDecodeTest extends TestCase
     /** @var \Symfony\Component\Serializer\Encoder\JsonDecode */
     private $decode;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->decode = new JsonDecode();
     }
@@ -47,28 +47,28 @@ class JsonDecodeTest extends TestCase
         $stdClass = new \stdClass();
         $stdClass->foo = 'bar';
 
-        $assoc = array('foo' => 'bar');
+        $assoc = ['foo' => 'bar'];
 
-        return array(
-            array('{"foo": "bar"}', $stdClass, array()),
-            array('{"foo": "bar"}', $assoc, array('json_decode_associative' => true)),
-        );
+        return [
+            ['{"foo": "bar"}', $stdClass, []],
+            ['{"foo": "bar"}', $assoc, ['json_decode_associative' => true]],
+        ];
     }
 
     /**
      * @dataProvider decodeProviderException
-     * @expectedException \Symfony\Component\Serializer\Exception\UnexpectedValueException
      */
     public function testDecodeWithException($value)
     {
+        $this->expectException('Symfony\Component\Serializer\Exception\UnexpectedValueException');
         $this->decode->decode($value, JsonEncoder::FORMAT);
     }
 
     public function decodeProviderException()
     {
-        return array(
-            array("{'foo': 'bar'}"),
-            array('kaboom!'),
-        );
+        return [
+            ["{'foo': 'bar'}"],
+            ['kaboom!'],
+        ];
     }
 }

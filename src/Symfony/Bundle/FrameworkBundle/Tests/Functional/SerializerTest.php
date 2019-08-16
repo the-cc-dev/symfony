@@ -14,14 +14,13 @@ namespace Symfony\Bundle\FrameworkBundle\Tests\Functional;
 /**
  * @author Kévin Dunglas <dunglas@gmail.com>
  */
-class SerializerTest extends WebTestCase
+class SerializerTest extends AbstractWebTestCase
 {
     public function testDeserializeArrayOfObject()
     {
-        static::bootKernel(array('test_case' => 'Serializer'));
-        $container = static::$kernel->getContainer();
+        static::bootKernel(['test_case' => 'Serializer']);
 
-        $result = $container->get('serializer')->deserialize('{"bars": [{"id": 1}, {"id": 2}]}', Foo::class, 'json');
+        $result = static::$container->get('serializer')->deserialize('{"bars": [{"id": 1}, {"id": 2}]}', Foo::class, 'json');
 
         $bar1 = new Bar();
         $bar1->id = 1;
@@ -29,7 +28,7 @@ class SerializerTest extends WebTestCase
         $bar2->id = 2;
 
         $expected = new Foo();
-        $expected->bars = array($bar1, $bar2);
+        $expected->bars = [$bar1, $bar2];
 
         $this->assertEquals($expected, $result);
     }

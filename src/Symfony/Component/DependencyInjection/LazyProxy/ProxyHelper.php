@@ -21,7 +21,7 @@ class ProxyHelper
     /**
      * @return string|null The FQCN or builtin name of the type hint, or null when the type hint references an invalid self|parent context
      */
-    public static function getTypeHint(\ReflectionFunctionAbstract $r, \ReflectionParameter $p = null, $noBuiltin = false)
+    public static function getTypeHint(\ReflectionFunctionAbstract $r, \ReflectionParameter $p = null, bool $noBuiltin = false)
     {
         if ($p instanceof \ReflectionParameter) {
             $type = $p->getType();
@@ -29,9 +29,9 @@ class ProxyHelper
             $type = $r->getReturnType();
         }
         if (!$type) {
-            return;
+            return null;
         }
-        if (!is_string($type)) {
+        if (!\is_string($type)) {
             $name = $type->getName();
 
             if ($type->isBuiltin()) {
@@ -45,7 +45,7 @@ class ProxyHelper
             return $prefix.$name;
         }
         if (!$r instanceof \ReflectionMethod) {
-            return;
+            return null;
         }
         if ('self' === $lcName) {
             return $prefix.$r->getDeclaringClass()->name;
@@ -53,18 +53,5 @@ class ProxyHelper
         if ($parent = $r->getDeclaringClass()->getParentClass()) {
             return $prefix.$parent->name;
         }
-    }
-
-    private static function export($value)
-    {
-        if (!is_array($value)) {
-            return var_export($value, true);
-        }
-        $code = array();
-        foreach ($value as $k => $v) {
-            $code[] = sprintf('%s => %s', var_export($k, true), self::export($v));
-        }
-
-        return sprintf('array(%s)', implode(', ', $code));
     }
 }

@@ -11,8 +11,8 @@
 
 namespace Symfony\Component\Intl\Data\Bundle\Reader;
 
-use Symfony\Component\Intl\Exception\ResourceBundleNotFoundException;
 use Symfony\Component\Intl\Data\Util\ArrayAccessibleResourceBundle;
+use Symfony\Component\Intl\Exception\ResourceBundleNotFoundException;
 
 /**
  * Reads binary .res resource bundles.
@@ -26,7 +26,7 @@ class IntlBundleReader implements BundleReaderInterface
     /**
      * {@inheritdoc}
      */
-    public function read($path, $locale)
+    public function read(string $path, string $locale)
     {
         // Point for future extension: Modify this class so that it works also
         // if the \ResourceBundle class is not available.
@@ -40,11 +40,7 @@ class IntlBundleReader implements BundleReaderInterface
         // The bundle is NULL if the path does not look like a resource bundle
         // (i.e. contain a bunch of *.res files)
         if (null === $bundle) {
-            throw new ResourceBundleNotFoundException(sprintf(
-                'The resource bundle "%s/%s.res" could not be found.',
-                $path,
-                $locale
-            ));
+            throw new ResourceBundleNotFoundException(sprintf('The resource bundle "%s/%s.res" could not be found.', $path, $locale));
         }
 
         // Other possible errors are U_USING_FALLBACK_WARNING and U_ZERO_ERROR,

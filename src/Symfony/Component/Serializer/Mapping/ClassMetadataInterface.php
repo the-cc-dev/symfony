@@ -46,7 +46,7 @@ interface ClassMetadataInterface
     /**
      * Merges a {@link ClassMetadataInterface} in the current one.
      */
-    public function merge(ClassMetadataInterface $classMetadata);
+    public function merge(self $classMetadata);
 
     /**
      * Returns a {@link \ReflectionClass} instance for this class.
@@ -60,8 +60,5 @@ interface ClassMetadataInterface
      */
     public function getClassDiscriminatorMapping();
 
-    /**
-     * @param ClassDiscriminatorMapping|null $mapping
-     */
     public function setClassDiscriminatorMapping(ClassDiscriminatorMapping $mapping = null);
 }

@@ -19,7 +19,7 @@ use Symfony\Component\Security\Csrf\Exception\TokenNotFoundException;
  *
  * @author Bernhard Schussek <bschussek@gmail.com>
  */
-class SessionTokenStorage implements TokenStorageInterface
+class SessionTokenStorage implements ClearableTokenStorageInterface
 {
     /**
      * The namespace used to store values in the session.
@@ -32,8 +32,7 @@ class SessionTokenStorage implements TokenStorageInterface
     /**
      * Initializes the storage with a Session object and a session namespace.
      *
-     * @param SessionInterface $session   The user session from which the session ID is returned
-     * @param string           $namespace The namespace under which the token is stored in the session
+     * @param string $namespace The namespace under which the token is stored in the session
      */
     public function __construct(SessionInterface $session, string $namespace = self::SESSION_NAMESPACE)
     {
@@ -44,7 +43,7 @@ class SessionTokenStorage implements TokenStorageInterface
     /**
      * {@inheritdoc}
      */
-    public function getToken($tokenId)
+    public function getToken(string $tokenId)
     {
         if (!$this->session->isStarted()) {
             $this->session->start();
@@ -60,19 +59,19 @@ class SessionTokenStorage implements TokenStorageInterface
     /**
      * {@inheritdoc}
      */
-    public function setToken($tokenId, $token)
+    public function setToken(string $tokenId, string $token)
     {
         if (!$this->session->isStarted()) {
             $this->session->start();
         }
 
-        $this->session->set($this->namespace.'/'.$tokenId, (string) $token);
+        $this->session->set($this->namespace.'/'.$tokenId, $token);
     }
 
     /**
      * {@inheritdoc}
      */
-    public function hasToken($tokenId)
+    public function hasToken(string $tokenId)
     {
         if (!$this->session->isStarted()) {
             $this->session->start();
@@ -84,12 +83,24 @@ class SessionTokenStorage implements TokenStorageInterface
     /**
      * {@inheritdoc}
      */
-    public function removeToken($tokenId)
+    public function removeToken(string $tokenId)
     {
         if (!$this->session->isStarted()) {
             $this->session->start();
         }
 
         return $this->session->remove($this->namespace.'/'.$tokenId);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function clear()
+    {
+        foreach (array_keys($this->session->all()) as $key) {
+            if (0 === strpos($key, $this->namespace.'/')) {
+                $this->session->remove($key);
+            }
+        }
     }
 }

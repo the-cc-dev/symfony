@@ -25,7 +25,7 @@ class Profile
     /**
      * @var DataCollectorInterface[]
      */
-    private $collectors = array();
+    private $collectors = [];
 
     private $ip;
     private $method;
@@ -41,19 +41,14 @@ class Profile
     /**
      * @var Profile[]
      */
-    private $children = array();
+    private $children = [];
 
     public function __construct(string $token)
     {
         $this->token = $token;
     }
 
-    /**
-     * Sets the token.
-     *
-     * @param string $token The token
-     */
-    public function setToken($token)
+    public function setToken(string $token)
     {
         $this->token = $token;
     }
@@ -71,7 +66,7 @@ class Profile
     /**
      * Sets the parent token.
      */
-    public function setParent(Profile $parent)
+    public function setParent(self $parent)
     {
         $this->parent = $parent;
     }
@@ -89,7 +84,7 @@ class Profile
     /**
      * Returns the parent token.
      *
-     * @return null|string The parent token
+     * @return string|null The parent token
      */
     public function getParentToken()
     {
@@ -106,19 +101,12 @@ class Profile
         return $this->ip;
     }
 
-    /**
-     * Sets the IP.
-     *
-     * @param string $ip
-     */
-    public function setIp($ip)
+    public function setIp(string $ip)
     {
         $this->ip = $ip;
     }
 
     /**
-     * Returns the request method.
-     *
      * @return string The request method
      */
     public function getMethod()
@@ -126,14 +114,12 @@ class Profile
         return $this->method;
     }
 
-    public function setMethod($method)
+    public function setMethod(string $method)
     {
         $this->method = $method;
     }
 
     /**
-     * Returns the URL.
-     *
      * @return string The URL
      */
     public function getUrl()
@@ -141,14 +127,12 @@ class Profile
         return $this->url;
     }
 
-    public function setUrl($url)
+    public function setUrl(string $url)
     {
         $this->url = $url;
     }
 
     /**
-     * Returns the time.
-     *
      * @return int The time
      */
     public function getTime()
@@ -160,18 +144,12 @@ class Profile
         return $this->time;
     }
 
-    /**
-     * @param int $time The time
-     */
-    public function setTime($time)
+    public function setTime(int $time)
     {
         $this->time = $time;
     }
 
-    /**
-     * @param int $statusCode
-     */
-    public function setStatusCode($statusCode)
+    public function setStatusCode(int $statusCode)
     {
         $this->statusCode = $statusCode;
     }
@@ -201,7 +179,7 @@ class Profile
      */
     public function setChildren(array $children)
     {
-        $this->children = array();
+        $this->children = [];
         foreach ($children as $child) {
             $this->addChild($child);
         }
@@ -210,7 +188,7 @@ class Profile
     /**
      * Adds the child token.
      */
-    public function addChild(Profile $child)
+    public function addChild(self $child)
     {
         $this->children[] = $child;
         $child->setParent($this);
@@ -230,13 +208,11 @@ class Profile
     /**
      * Gets a Collector by name.
      *
-     * @param string $name A collector name
-     *
      * @return DataCollectorInterface A DataCollectorInterface instance
      *
      * @throws \InvalidArgumentException if the collector does not exist
      */
-    public function getCollector($name)
+    public function getCollector(string $name)
     {
         if (!isset($this->collectors[$name])) {
             throw new \InvalidArgumentException(sprintf('Collector "%s" does not exist.', $name));
@@ -262,7 +238,7 @@ class Profile
      */
     public function setCollectors(array $collectors)
     {
-        $this->collectors = array();
+        $this->collectors = [];
         foreach ($collectors as $collector) {
             $this->addCollector($collector);
         }
@@ -277,19 +253,15 @@ class Profile
     }
 
     /**
-     * Returns true if a Collector for the given name exists.
-     *
-     * @param string $name A collector name
-     *
      * @return bool
      */
-    public function hasCollector($name)
+    public function hasCollector(string $name)
     {
         return isset($this->collectors[$name]);
     }
 
     public function __sleep()
     {
-        return array('token', 'parent', 'children', 'collectors', 'ip', 'method', 'url', 'time', 'statusCode');
+        return ['token', 'parent', 'children', 'collectors', 'ip', 'method', 'url', 'time', 'statusCode'];
     }
 }

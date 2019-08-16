@@ -70,11 +70,11 @@ class ReaderTest extends TestCase
         $reader = new Reader('hello');
 
         $this->assertFalse($reader->findPattern('/world/'));
-        $this->assertEquals(array('hello', 'h'), $reader->findPattern('/^([a-z]).*/'));
+        $this->assertEquals(['hello', 'h'], $reader->findPattern('/^([a-z]).*/'));
 
         $this->assignPosition($reader, 2);
         $this->assertFalse($reader->findPattern('/^h.*/'));
-        $this->assertEquals(array('llo'), $reader->findPattern('/^llo$/'));
+        $this->assertEquals(['llo'], $reader->findPattern('/^llo$/'));
     }
 
     public function testMoveForward()
@@ -93,7 +93,7 @@ class ReaderTest extends TestCase
         $this->assertTrue($reader->isEOF());
     }
 
-    private function assignPosition(Reader $reader, $value)
+    private function assignPosition(Reader $reader, int $value)
     {
         $position = new \ReflectionProperty($reader, 'position');
         $position->setAccessible(true);

@@ -44,23 +44,23 @@ class ContentSecurityPolicyHandler
     public function getNonces(Request $request, Response $response)
     {
         if ($request->headers->has('X-SymfonyProfiler-Script-Nonce') && $request->headers->has('X-SymfonyProfiler-Style-Nonce')) {
-            return array(
+            return [
                 'csp_script_nonce' => $request->headers->get('X-SymfonyProfiler-Script-Nonce'),
                 'csp_style_nonce' => $request->headers->get('X-SymfonyProfiler-Style-Nonce'),
-            );
+            ];
         }
 
         if ($response->headers->has('X-SymfonyProfiler-Script-Nonce') && $response->headers->has('X-SymfonyProfiler-Style-Nonce')) {
-            return array(
+            return [
                 'csp_script_nonce' => $response->headers->get('X-SymfonyProfiler-Script-Nonce'),
                 'csp_style_nonce' => $response->headers->get('X-SymfonyProfiler-Style-Nonce'),
-            );
+            ];
         }
 
-        $nonces = array(
+        $nonces = [
             'csp_script_nonce' => $this->generateNonce(),
             'csp_style_nonce' => $this->generateNonce(),
-        );
+        ];
 
         $response->headers->set('X-SymfonyProfiler-Script-Nonce', $nonces['csp_script_nonce']);
         $response->headers->set('X-SymfonyProfiler-Style-Nonce', $nonces['csp_style_nonce']);
@@ -88,7 +88,7 @@ class ContentSecurityPolicyHandler
         if ($this->cspDisabled) {
             $this->removeCspHeaders($response);
 
-            return array();
+            return [];
         }
 
         $nonces = $this->getNonces($request, $response);
@@ -113,22 +113,20 @@ class ContentSecurityPolicyHandler
 
     /**
      * Updates Content-Security-Policy headers in a response.
-     *
-     * @return array
      */
-    private function updateCspHeaders(Response $response, array $nonces = array())
+    private function updateCspHeaders(Response $response, array $nonces = []): array
     {
-        $nonces = array_replace(array(
+        $nonces = array_replace([
             'csp_script_nonce' => $this->generateNonce(),
             'csp_style_nonce' => $this->generateNonce(),
-        ), $nonces);
+        ], $nonces);
 
         $ruleIsSet = false;
 
         $headers = $this->getCspHeaders($response);
 
         foreach ($headers as $header => $directives) {
-            foreach (array('script-src' => 'csp_script_nonce', 'style-src' => 'csp_style_nonce') as $type => $tokenName) {
+            foreach (['script-src' => 'csp_script_nonce', 'style-src' => 'csp_style_nonce'] as $type => $tokenName) {
                 if ($this->authorizesInline($directives, $type)) {
                     continue;
                 }
@@ -141,7 +139,7 @@ class ContentSecurityPolicyHandler
                     }
                 }
                 $ruleIsSet = true;
-                if (!in_array('\'unsafe-inline\'', $headers[$header][$type], true)) {
+                if (!\in_array('\'unsafe-inline\'', $headers[$header][$type], true)) {
                     $headers[$header][$type][] = '\'unsafe-inline\'';
                 }
                 $headers[$header][$type][] = sprintf('\'nonce-%s\'', $nonces[$tokenName]);
@@ -161,22 +159,16 @@ class ContentSecurityPolicyHandler
 
     /**
      * Generates a valid Content-Security-Policy nonce.
-     *
-     * @return string
      */
-    private function generateNonce()
+    private function generateNonce(): string
     {
         return $this->nonceGenerator->generate();
     }
 
     /**
      * Converts a directive set array into Content-Security-Policy header.
-     *
-     * @param array $directives The directive set
-     *
-     * @return string The Content-Security-Policy header
      */
-    private function generateCspHeader(array $directives)
+    private function generateCspHeader(array $directives): string
     {
         return array_reduce(array_keys($directives), function ($res, $name) use ($directives) {
             return ('' !== $res ? $res.'; ' : '').sprintf('%s %s', $name, implode(' ', $directives[$name]));
@@ -185,18 +177,14 @@ class ContentSecurityPolicyHandler
 
     /**
      * Converts a Content-Security-Policy header value into a directive set array.
-     *
-     * @param string $header The header value
-     *
-     * @return array The directive set
      */
-    private function parseDirectives($header)
+    private function parseDirectives(string $header): array
     {
-        $directives = array();
+        $directives = [];
 
         foreach (explode(';', $header) as $directive) {
             $parts = explode(' ', trim($directive));
-            if (count($parts) < 1) {
+            if (\count($parts) < 1) {
                 continue;
             }
             $name = array_shift($parts);
@@ -208,13 +196,8 @@ class ContentSecurityPolicyHandler
 
     /**
      * Detects if the 'unsafe-inline' is prevented for a directive within the directive set.
-     *
-     * @param array  $directivesSet The directive set
-     * @param string $type          The name of the directive to check
-     *
-     * @return bool
      */
-    private function authorizesInline(array $directivesSet, $type)
+    private function authorizesInline(array $directivesSet, string $type): bool
     {
         if (isset($directivesSet[$type])) {
             $directives = $directivesSet[$type];
@@ -224,10 +207,10 @@ class ContentSecurityPolicyHandler
             return false;
         }
 
-        return in_array('\'unsafe-inline\'', $directives, true) && !$this->hasHashOrNonce($directives);
+        return \in_array('\'unsafe-inline\'', $directives, true) && !$this->hasHashOrNonce($directives);
     }
 
-    private function hasHashOrNonce(array $directives)
+    private function hasHashOrNonce(array $directives): bool
     {
         foreach ($directives as $directive) {
             if ('\'' !== substr($directive, -1)) {
@@ -236,7 +219,7 @@ class ContentSecurityPolicyHandler
             if ('\'nonce-' === substr($directive, 0, 7)) {
                 return true;
             }
-            if (in_array(substr($directive, 0, 8), array('\'sha256-', '\'sha384-', '\'sha512-'), true)) {
+            if (\in_array(substr($directive, 0, 8), ['\'sha256-', '\'sha384-', '\'sha512-'], true)) {
                 return true;
             }
         }
@@ -247,12 +230,10 @@ class ContentSecurityPolicyHandler
     /**
      * Retrieves the Content-Security-Policy headers (either X-Content-Security-Policy or Content-Security-Policy) from
      * a response.
-     *
-     * @return array An associative array of headers
      */
-    private function getCspHeaders(Response $response)
+    private function getCspHeaders(Response $response): array
     {
-        $headers = array();
+        $headers = [];
 
         if ($response->headers->has('Content-Security-Policy')) {
             $headers['Content-Security-Policy'] = $this->parseDirectives($response->headers->get('Content-Security-Policy'));

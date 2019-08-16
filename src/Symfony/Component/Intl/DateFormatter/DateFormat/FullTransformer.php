@@ -49,7 +49,7 @@ class FullTransformer
         $notImplementedCharsMatch = $this->buildCharsMatch($this->notImplementedChars);
         $this->regExp = "/($this->quoteMatch|$implementedCharsMatch|$notImplementedCharsMatch)/";
 
-        $this->transformers = array(
+        $this->transformers = [
             'M' => new MonthTransformer(),
             'L' => new MonthTransformer(),
             'y' => new YearTransformer(),
@@ -66,23 +66,11 @@ class FullTransformer
             'm' => new MinuteTransformer(),
             's' => new SecondTransformer(),
             'z' => new TimezoneTransformer(),
-        );
-    }
-
-    /**
-     * Return the array of Transformer objects.
-     *
-     * @return Transformer[] Associative array of Transformer objects (format char => Transformer)
-     */
-    public function getTransformers()
-    {
-        return $this->transformers;
+        ];
     }
 
     /**
      * Format a DateTime using ICU dateformat pattern.
-     *
-     * @param \DateTime $dateTime A DateTime object to be used to generate the formatted value
      *
      * @return string The formatted value
      */
@@ -98,16 +86,11 @@ class FullTransformer
     /**
      * Return the formatted ICU value for the matched date characters.
      *
-     * @param string    $dateChars The date characters to be replaced with a formatted ICU value
-     * @param \DateTime $dateTime  A DateTime object to be used to generate the formatted value
-     *
-     * @return string The formatted value
-     *
      * @throws NotImplementedException When it encounters a not implemented date character
      */
-    public function formatReplace($dateChars, $dateTime)
+    private function formatReplace(string $dateChars, \DateTime $dateTime): string
     {
-        $length = strlen($dateChars);
+        $length = \strlen($dateChars);
 
         if ($this->isQuoteMatch($dateChars)) {
             return $this->replaceQuoteMatch($dateChars);
@@ -135,19 +118,19 @@ class FullTransformer
      *
      * @throws \InvalidArgumentException When the value can not be matched with pattern
      */
-    public function parse(\DateTime $dateTime, $value)
+    public function parse(\DateTime $dateTime, string $value)
     {
         $reverseMatchingRegExp = $this->getReverseMatchingRegExp($this->pattern);
         $reverseMatchingRegExp = '/^'.$reverseMatchingRegExp.'$/';
 
-        $options = array();
+        $options = [];
 
         if (preg_match($reverseMatchingRegExp, $value, $matches)) {
             $matches = $this->normalizeArray($matches);
 
             foreach ($this->transformers as $char => $transformer) {
                 if (isset($matches[$char])) {
-                    $length = strlen($matches[$char]['pattern']);
+                    $length = \strlen($matches[$char]['pattern']);
                     $options = array_merge($options, $transformer->extractDateOptions($matches[$char]['value'], $length));
                 }
             }
@@ -167,12 +150,10 @@ class FullTransformer
     /**
      * Retrieve a regular expression to match with a formatted value.
      *
-     * @param string $pattern The pattern to create the reverse matching regular expression
-     *
      * @return string The reverse matching regular expression with named captures being formed by the
      *                transformer index in the $transformer array
      */
-    public function getReverseMatchingRegExp($pattern)
+    private function getReverseMatchingRegExp(string $pattern): string
     {
         $escapedPattern = preg_quote($pattern, '/');
 
@@ -181,7 +162,7 @@ class FullTransformer
         $escapedPattern = preg_replace('/\\\[\-|\/]/', '[\/\-]', $escapedPattern);
 
         $reverseMatchingRegExp = preg_replace_callback($this->regExp, function ($matches) {
-            $length = strlen($matches[0]);
+            $length = \strlen($matches[0]);
             $transformerIndex = $matches[0][0];
 
             $dateChars = $matches[0];
@@ -189,9 +170,8 @@ class FullTransformer
                 return $this->replaceQuoteMatch($dateChars);
             }
 
-            $transformers = $this->getTransformers();
-            if (isset($transformers[$transformerIndex])) {
-                $transformer = $transformers[$transformerIndex];
+            if (isset($this->transformers[$transformerIndex])) {
+                $transformer = $this->transformers[$transformerIndex];
                 $captureName = str_repeat($transformerIndex, $length);
 
                 return "(?P<$captureName>".$transformer->getReverseMatchingRegExp($length).')';
@@ -203,24 +183,16 @@ class FullTransformer
 
     /**
      * Check if the first char of a string is a single quote.
-     *
-     * @param string $quoteMatch The string to check
-     *
-     * @return bool true if matches, false otherwise
      */
-    public function isQuoteMatch($quoteMatch)
+    private function isQuoteMatch(string $quoteMatch): bool
     {
         return "'" === $quoteMatch[0];
     }
 
     /**
      * Replaces single quotes at the start or end of a string with two single quotes.
-     *
-     * @param string $quoteMatch The string to replace the quotes
-     *
-     * @return string A string with the single quotes replaced
      */
-    public function replaceQuoteMatch($quoteMatch)
+    private function replaceQuoteMatch(string $quoteMatch): string
     {
         if (preg_match("/^'+$/", $quoteMatch)) {
             return str_replace("''", "'", $quoteMatch);
@@ -231,12 +203,8 @@ class FullTransformer
 
     /**
      * Builds a chars match regular expression.
-     *
-     * @param string $specialChars A string of chars to build the regular expression
-     *
-     * @return string The chars match regular expression
      */
-    protected function buildCharsMatch($specialChars)
+    private function buildCharsMatch(string $specialChars): string
     {
         $specialCharsArray = str_split($specialChars);
 
@@ -250,22 +218,20 @@ class FullTransformer
     /**
      * Normalize a preg_replace match array, removing the numeric keys and returning an associative array
      * with the value and pattern values for the matched Transformer.
-     *
-     * @return array
      */
-    protected function normalizeArray(array $data)
+    private function normalizeArray(array $data): array
     {
-        $ret = array();
+        $ret = [];
 
         foreach ($data as $key => $value) {
-            if (!is_string($key)) {
+            if (!\is_string($key)) {
                 continue;
             }
 
-            $ret[$key[0]] = array(
+            $ret[$key[0]] = [
                 'value' => $value,
                 'pattern' => $key,
-            );
+            ];
         }
 
         return $ret;
@@ -275,12 +241,9 @@ class FullTransformer
      * Calculates the Unix timestamp based on the matched values by the reverse matching regular
      * expression of parse().
      *
-     * @param \DateTime $dateTime The DateTime object to be used to calculate the timestamp
-     * @param array     $options  An array with the matched values to be used to calculate the timestamp
-     *
      * @return bool|int The calculated timestamp or false if matched date is invalid
      */
-    protected function calculateUnixTimestamp(\DateTime $dateTime, array $options)
+    private function calculateUnixTimestamp(\DateTime $dateTime, array $options)
     {
         $options = $this->getDefaultValueForOptions($options);
 
@@ -313,9 +276,9 @@ class FullTransformer
 
         // Normalize yy year
         preg_match_all($this->regExp, $this->pattern, $matches);
-        if (in_array('yy', $matches[0])) {
+        if (\in_array('yy', $matches[0])) {
             $dateTime->setTimestamp(time());
-            $year = $year > $dateTime->format('y') + 20 ? 1900 + $year : 2000 + $year;
+            $year = $year > (int) $dateTime->format('y') + 20 ? 1900 + $year : 2000 + $year;
         }
 
         $dateTime->setDate($year, $month, $day);
@@ -327,12 +290,10 @@ class FullTransformer
     /**
      * Add sensible default values for missing items in the extracted date/time options array. The values
      * are base in the beginning of the Unix era.
-     *
-     * @return array
      */
-    private function getDefaultValueForOptions(array $options)
+    private function getDefaultValueForOptions(array $options): array
     {
-        return array(
+        return [
             'year' => isset($options['year']) ? $options['year'] : 1970,
             'month' => isset($options['month']) ? $options['month'] : 1,
             'day' => isset($options['day']) ? $options['day'] : 1,
@@ -342,6 +303,6 @@ class FullTransformer
             'second' => isset($options['second']) ? $options['second'] : 0,
             'marker' => isset($options['marker']) ? $options['marker'] : null,
             'timezone' => isset($options['timezone']) ? $options['timezone'] : null,
-        );
+        ];
     }
 }

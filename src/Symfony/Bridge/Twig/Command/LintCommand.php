@@ -77,7 +77,7 @@ EOF
         $io = new SymfonyStyle($input, $output);
         $filenames = $input->getArgument('filename');
 
-        if (0 === count($filenames)) {
+        if (0 === \count($filenames)) {
             if (0 !== ftell(STDIN)) {
                 throw new RuntimeException('Please provide a filename or pipe template content to STDIN.');
             }
@@ -87,7 +87,7 @@ EOF
                 $template .= fread(STDIN, 1024);
             }
 
-            return $this->display($input, $output, $io, array($this->validate($template, uniqid('sf_', true))));
+            return $this->display($input, $output, $io, [$this->validate($template, uniqid('sf_', true))]);
         }
 
         $filesInfo = $this->getFilesInfo($filenames);
@@ -97,7 +97,7 @@ EOF
 
     private function getFilesInfo(array $filenames)
     {
-        $filesInfo = array();
+        $filesInfo = [];
         foreach ($filenames as $filename) {
             foreach ($this->findFiles($filename) as $file) {
                 $filesInfo[] = $this->validate(file_get_contents($file), $file);
@@ -107,10 +107,10 @@ EOF
         return $filesInfo;
     }
 
-    protected function findFiles($filename)
+    protected function findFiles(string $filename)
     {
         if (is_file($filename)) {
-            return array($filename);
+            return [$filename];
         } elseif (is_dir($filename)) {
             return Finder::create()->files()->in($filename)->name('*.twig');
         }
@@ -118,11 +118,11 @@ EOF
         throw new RuntimeException(sprintf('File or directory "%s" is not readable', $filename));
     }
 
-    private function validate($template, $file)
+    private function validate(string $template, $file)
     {
         $realLoader = $this->twig->getLoader();
         try {
-            $temporaryLoader = new ArrayLoader(array((string) $file => $template));
+            $temporaryLoader = new ArrayLoader([(string) $file => $template]);
             $this->twig->setLoader($temporaryLoader);
             $nodeTree = $this->twig->parse($this->twig->tokenize(new Source($template, (string) $file)));
             $this->twig->compile($nodeTree);
@@ -130,13 +130,13 @@ EOF
         } catch (Error $e) {
             $this->twig->setLoader($realLoader);
 
-            return array('template' => $template, 'file' => $file, 'line' => $e->getTemplateLine(), 'valid' => false, 'exception' => $e);
+            return ['template' => $template, 'file' => $file, 'line' => $e->getTemplateLine(), 'valid' => false, 'exception' => $e];
         }
 
-        return array('template' => $template, 'file' => $file, 'valid' => true);
+        return ['template' => $template, 'file' => $file, 'valid' => true];
     }
 
-    private function display(InputInterface $input, OutputInterface $output, SymfonyStyle $io, $files)
+    private function display(InputInterface $input, OutputInterface $output, SymfonyStyle $io, array $files)
     {
         switch ($input->getOption('format')) {
             case 'txt':
@@ -148,7 +148,7 @@ EOF
         }
     }
 
-    private function displayTxt(OutputInterface $output, SymfonyStyle $io, $filesInfo)
+    private function displayTxt(OutputInterface $output, SymfonyStyle $io, array $filesInfo)
     {
         $errors = 0;
 
@@ -162,15 +162,15 @@ EOF
         }
 
         if (0 === $errors) {
-            $io->success(sprintf('All %d Twig files contain valid syntax.', count($filesInfo)));
+            $io->success(sprintf('All %d Twig files contain valid syntax.', \count($filesInfo)));
         } else {
-            $io->warning(sprintf('%d Twig files have valid syntax and %d contain errors.', count($filesInfo) - $errors, $errors));
+            $io->warning(sprintf('%d Twig files have valid syntax and %d contain errors.', \count($filesInfo) - $errors, $errors));
         }
 
         return min($errors, 1);
     }
 
-    private function displayJson(OutputInterface $output, $filesInfo)
+    private function displayJson(OutputInterface $output, array $filesInfo)
     {
         $errors = 0;
 
@@ -189,7 +189,7 @@ EOF
         return min($errors, 1);
     }
 
-    private function renderException(OutputInterface $output, $template, Error $exception, $file = null)
+    private function renderException(OutputInterface $output, string $template, Error $exception, string $file = null)
     {
         $line = $exception->getTemplateLine();
 
@@ -212,14 +212,14 @@ EOF
         }
     }
 
-    private function getContext($template, $line, $context = 3)
+    private function getContext(string $template, int $line, int $context = 3)
     {
         $lines = explode("\n", $template);
 
         $position = max(0, $line - $context);
-        $max = min(count($lines), $line - 1 + $context);
+        $max = min(\count($lines), $line - 1 + $context);
 
-        $result = array();
+        $result = [];
         while ($position < $max) {
             $result[$position + 1] = $lines[$position];
             ++$position;

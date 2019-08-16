@@ -25,16 +25,18 @@ class YamlExtension extends AbstractExtension
 {
     /**
      * {@inheritdoc}
+     *
+     * @return TwigFilter[]
      */
     public function getFilters()
     {
-        return array(
-            new TwigFilter('yaml_encode', array($this, 'encode')),
-            new TwigFilter('yaml_dump', array($this, 'dump')),
-        );
+        return [
+            new TwigFilter('yaml_encode', [$this, 'encode']),
+            new TwigFilter('yaml_dump', [$this, 'dump']),
+        ];
     }
 
-    public function encode($input, $inline = 0, $dumpObjects = 0)
+    public function encode($input, int $inline = 0, int $dumpObjects = 0)
     {
         static $dumper;
 
@@ -42,21 +44,21 @@ class YamlExtension extends AbstractExtension
             $dumper = new YamlDumper();
         }
 
-        if (defined('Symfony\Component\Yaml\Yaml::DUMP_OBJECT')) {
+        if (\defined('Symfony\Component\Yaml\Yaml::DUMP_OBJECT')) {
             return $dumper->dump($input, $inline, 0, $dumpObjects);
         }
 
         return $dumper->dump($input, $inline, 0, false, $dumpObjects);
     }
 
-    public function dump($value, $inline = 0, $dumpObjects = false)
+    public function dump($value, int $inline = 0, int $dumpObjects = 0)
     {
-        if (is_resource($value)) {
+        if (\is_resource($value)) {
             return '%Resource%';
         }
 
-        if (is_array($value) || is_object($value)) {
-            return '%'.gettype($value).'% '.$this->encode($value, $inline, $dumpObjects);
+        if (\is_array($value) || \is_object($value)) {
+            return '%'.\gettype($value).'% '.$this->encode($value, $inline, $dumpObjects);
         }
 
         return $this->encode($value, $inline, $dumpObjects);

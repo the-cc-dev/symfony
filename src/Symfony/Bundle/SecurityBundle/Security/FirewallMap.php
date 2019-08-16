@@ -12,8 +12,8 @@
 namespace Symfony\Bundle\SecurityBundle\Security;
 
 use Psr\Container\ContainerInterface;
-use Symfony\Component\Security\Http\FirewallMapInterface;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Security\Http\FirewallMapInterface;
 
 /**
  * This is a lazy-loading firewall map implementation.
@@ -40,10 +40,10 @@ class FirewallMap implements FirewallMapInterface
         $context = $this->getFirewallContext($request);
 
         if (null === $context) {
-            return array(array(), null);
+            return [[], null, null];
         }
 
-        return array($context->getListeners(), $context->getExceptionListener());
+        return [$context->getListeners(), $context->getExceptionListener(), $context->getLogoutListener()];
     }
 
     /**
@@ -54,16 +54,13 @@ class FirewallMap implements FirewallMapInterface
         $context = $this->getFirewallContext($request);
 
         if (null === $context) {
-            return;
+            return null;
         }
 
         return $context->getConfig();
     }
 
-    /**
-     * @return FirewallContext
-     */
-    private function getFirewallContext(Request $request)
+    private function getFirewallContext(Request $request): ?FirewallContext
     {
         if ($request->attributes->has('_firewall_context')) {
             $storedContextId = $request->attributes->get('_firewall_context');
@@ -83,5 +80,7 @@ class FirewallMap implements FirewallMapInterface
                 return $this->container->get($contextId);
             }
         }
+
+        return null;
     }
 }

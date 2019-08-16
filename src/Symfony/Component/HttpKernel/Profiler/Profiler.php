@@ -11,26 +11,27 @@
 
 namespace Symfony\Component\HttpKernel\Profiler;
 
+use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Exception\ConflictingHeadersException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\DataCollector\DataCollectorInterface;
 use Symfony\Component\HttpKernel\DataCollector\LateDataCollectorInterface;
-use Psr\Log\LoggerInterface;
+use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * Profiler.
  *
  * @author Fabien Potencier <fabien@symfony.com>
  */
-class Profiler
+class Profiler implements ResetInterface
 {
     private $storage;
 
     /**
      * @var DataCollectorInterface[]
      */
-    private $collectors = array();
+    private $collectors = [];
 
     private $logger;
     private $initiallyEnabled = true;
@@ -76,11 +77,9 @@ class Profiler
     /**
      * Loads the Profile for the given token.
      *
-     * @param string $token A token
-     *
      * @return Profile A Profile instance
      */
-    public function loadProfile($token)
+    public function loadProfile(string $token)
     {
         return $this->storage->read($token);
     }
@@ -100,7 +99,7 @@ class Profiler
         }
 
         if (!($ret = $this->storage->write($profile)) && null !== $this->logger) {
-            $this->logger->warning('Unable to store the profiler information.', array('configured_storage' => get_class($this->storage)));
+            $this->logger->warning('Unable to store the profiler information.', ['configured_storage' => \get_class($this->storage)]);
         }
 
         return $ret;
@@ -117,19 +116,15 @@ class Profiler
     /**
      * Finds profiler tokens for the given criteria.
      *
-     * @param string $ip         The IP
-     * @param string $url        The URL
-     * @param string $limit      The maximum number of tokens to return
-     * @param string $method     The request method
-     * @param string $start      The start date to search from
-     * @param string $end        The end date to search to
-     * @param string $statusCode The request status code
+     * @param string|null $limit The maximum number of tokens to return
+     * @param string|null $start The start date to search from
+     * @param string|null $end   The end date to search to
      *
      * @return array An array of tokens
      *
-     * @see http://php.net/manual/en/datetime.formats.php for the supported date/time formats
+     * @see https://php.net/datetime.formats for the supported date/time formats
      */
-    public function find($ip, $url, $limit, $method, $start, $end, $statusCode = null)
+    public function find(?string $ip, ?string $url, ?string $limit, ?string $method, ?string $start, ?string $end, string $statusCode = null)
     {
         return $this->storage->find($ip, $url, $limit, $method, $this->getTimestamp($start), $this->getTimestamp($end), $statusCode);
     }
@@ -142,7 +137,7 @@ class Profiler
     public function collect(Request $request, Response $response, \Exception $exception = null)
     {
         if (false === $this->enabled) {
-            return;
+            return null;
         }
 
         $profile = new Profile(substr(hash('sha256', uniqid(mt_rand(), true)), 0, 6));
@@ -195,9 +190,9 @@ class Profiler
      *
      * @param DataCollectorInterface[] $collectors An array of collectors
      */
-    public function set(array $collectors = array())
+    public function set(array $collectors = [])
     {
-        $this->collectors = array();
+        $this->collectors = [];
         foreach ($collectors as $collector) {
             $this->add($collector);
         }
@@ -218,7 +213,7 @@ class Profiler
      *
      * @return bool
      */
-    public function has($name)
+    public function has(string $name)
     {
         return isset($this->collectors[$name]);
     }
@@ -232,7 +227,7 @@ class Profiler
      *
      * @throws \InvalidArgumentException if the collector does not exist
      */
-    public function get($name)
+    public function get(string $name)
     {
         if (!isset($this->collectors[$name])) {
             throw new \InvalidArgumentException(sprintf('Collector "%s" does not exist.', $name));
@@ -241,7 +236,7 @@ class Profiler
         return $this->collectors[$name];
     }
 
-    private function getTimestamp($value)
+    private function getTimestamp(?string $value)
     {
         if (null === $value || '' == $value) {
             return;

@@ -39,14 +39,14 @@ class AppVariable
         $this->requestStack = $requestStack;
     }
 
-    public function setEnvironment($environment)
+    public function setEnvironment(string $environment)
     {
         $this->environment = $environment;
     }
 
-    public function setDebug($debug)
+    public function setDebug(bool $debug)
     {
-        $this->debug = (bool) $debug;
+        $this->debug = $debug;
     }
 
     /**
@@ -68,7 +68,7 @@ class AppVariable
     /**
      * Returns the current user.
      *
-     * @return mixed
+     * @return object|null
      *
      * @see TokenInterface::getUser()
      */
@@ -79,11 +79,11 @@ class AppVariable
         }
 
         if (!$token = $tokenStorage->getToken()) {
-            return;
+            return null;
         }
 
         $user = $token->getUser();
-        if (is_object($user)) {
+        if (\is_object($user)) {
             return $user;
         }
     }
@@ -112,10 +112,9 @@ class AppVariable
         if (null === $this->requestStack) {
             throw new \RuntimeException('The "app.session" variable is not available.');
         }
+        $request = $this->getRequest();
 
-        if ($request = $this->getRequest()) {
-            return $request->getSession();
-        }
+        return $request && $request->hasSession() ? $request->getSession() : null;
     }
 
     /**
@@ -150,30 +149,29 @@ class AppVariable
      * Returns some or all the existing flash messages:
      *  * getFlashes() returns all the flash messages
      *  * getFlashes('notice') returns a simple array with flash messages of that type
-     *  * getFlashes(array('notice', 'error')) returns a nested array of type => messages.
+     *  * getFlashes(['notice', 'error']) returns a nested array of type => messages.
      *
      * @return array
      */
     public function getFlashes($types = null)
     {
         try {
-            $session = $this->getSession();
-            if (null === $session) {
-                return array();
+            if (null === $session = $this->getSession()) {
+                return [];
             }
         } catch (\RuntimeException $e) {
-            return array();
+            return [];
         }
 
-        if (null === $types || '' === $types || array() === $types) {
+        if (null === $types || '' === $types || [] === $types) {
             return $session->getFlashBag()->all();
         }
 
-        if (is_string($types)) {
+        if (\is_string($types)) {
             return $session->getFlashBag()->get($types);
         }
 
-        $result = array();
+        $result = [];
         foreach ($types as $type) {
             $result[$type] = $session->getFlashBag()->get($type);
         }

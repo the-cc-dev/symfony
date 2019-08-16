@@ -14,21 +14,21 @@ class InMemoryMetadataStoreTest extends TestCase
     private $store;
     private $transition;
 
-    protected function setUp()
+    protected function setUp(): void
     {
-        $workflowMetadata = array(
+        $workflowMetadata = [
             'title' => 'workflow title',
-        );
-        $placesMetadata = array(
-            'place_a' => array(
+        ];
+        $placesMetadata = [
+            'place_a' => [
                 'title' => 'place_a title',
-            ),
-        );
+            ],
+        ];
         $transitionsMetadata = new \SplObjectStorage();
-        $this->transition = new Transition('transition_1', array(), array());
-        $transitionsMetadata[$this->transition] = array(
+        $this->transition = new Transition('transition_1', [], []);
+        $transitionsMetadata[$this->transition] = [
             'title' => 'transition_1 title',
-        );
+        ];
 
         $this->store = new InMemoryMetadataStore($workflowMetadata, $placesMetadata, $transitionsMetadata);
     }
@@ -42,7 +42,7 @@ class InMemoryMetadataStoreTest extends TestCase
     public function testGetUnexistingPlaceMetadata()
     {
         $metadataBag = $this->store->getPlaceMetadata('place_b');
-        $this->assertSame(array(), $metadataBag);
+        $this->assertSame([], $metadataBag);
     }
 
     public function testGetExistingPlaceMetadata()
@@ -53,8 +53,8 @@ class InMemoryMetadataStoreTest extends TestCase
 
     public function testGetUnexistingTransitionMetadata()
     {
-        $metadataBag = $this->store->getTransitionMetadata(new Transition('transition_2', array(), array()));
-        $this->assertSame(array(), $metadataBag);
+        $metadataBag = $this->store->getTransitionMetadata(new Transition('transition_2', [], []));
+        $this->assertSame([], $metadataBag);
     }
 
     public function testGetExistingTransitionMetadata()
@@ -72,15 +72,13 @@ class InMemoryMetadataStoreTest extends TestCase
         $this->assertNull($this->store->getMetadata('description', 'place_b'));
         $this->assertSame('transition_1 title', $this->store->getMetadata('title', $this->transition));
         $this->assertNull($this->store->getMetadata('description', $this->transition));
-        $this->assertNull($this->store->getMetadata('description', new Transition('transition_2', array(), array())));
+        $this->assertNull($this->store->getMetadata('description', new Transition('transition_2', [], [])));
     }
 
-    /**
-     * @expectedException \Symfony\Component\Workflow\Exception\InvalidArgumentException
-     * @expectedExceptionMessage Could not find a MetadataBag for the subject of type "boolean".
-     */
     public function testGetMetadataWithUnknownType()
     {
+        $this->expectException('Symfony\Component\Workflow\Exception\InvalidArgumentException');
+        $this->expectExceptionMessage('Could not find a MetadataBag for the subject of type "boolean".');
         $this->store->getMetadata('title', true);
     }
 }

@@ -11,8 +11,6 @@
 
 namespace Symfony\Component\Form;
 
-use Symfony\Component\Form\Exception\UnexpectedTypeException;
-
 class FormFactory implements FormFactoryInterface
 {
     private $registry;
@@ -25,7 +23,7 @@ class FormFactory implements FormFactoryInterface
     /**
      * {@inheritdoc}
      */
-    public function create($type = 'Symfony\Component\Form\Extension\Core\Type\FormType', $data = null, array $options = array())
+    public function create(string $type = 'Symfony\Component\Form\Extension\Core\Type\FormType', $data = null, array $options = [])
     {
         return $this->createBuilder($type, $data, $options)->getForm();
     }
@@ -33,7 +31,7 @@ class FormFactory implements FormFactoryInterface
     /**
      * {@inheritdoc}
      */
-    public function createNamed($name, $type = 'Symfony\Component\Form\Extension\Core\Type\FormType', $data = null, array $options = array())
+    public function createNamed(string $name, string $type = 'Symfony\Component\Form\Extension\Core\Type\FormType', $data = null, array $options = [])
     {
         return $this->createNamedBuilder($name, $type, $data, $options)->getForm();
     }
@@ -41,7 +39,7 @@ class FormFactory implements FormFactoryInterface
     /**
      * {@inheritdoc}
      */
-    public function createForProperty($class, $property, $data = null, array $options = array())
+    public function createForProperty(string $class, string $property, $data = null, array $options = [])
     {
         return $this->createBuilderForProperty($class, $property, $data, $options)->getForm();
     }
@@ -49,31 +47,23 @@ class FormFactory implements FormFactoryInterface
     /**
      * {@inheritdoc}
      */
-    public function createBuilder($type = 'Symfony\Component\Form\Extension\Core\Type\FormType', $data = null, array $options = array())
+    public function createBuilder(string $type = 'Symfony\Component\Form\Extension\Core\Type\FormType', $data = null, array $options = [])
     {
-        if (!is_string($type)) {
-            throw new UnexpectedTypeException($type, 'string');
-        }
-
         return $this->createNamedBuilder($this->registry->getType($type)->getBlockPrefix(), $type, $data, $options);
     }
 
     /**
      * {@inheritdoc}
      */
-    public function createNamedBuilder($name, $type = 'Symfony\Component\Form\Extension\Core\Type\FormType', $data = null, array $options = array())
+    public function createNamedBuilder(string $name, string $type = 'Symfony\Component\Form\Extension\Core\Type\FormType', $data = null, array $options = [])
     {
-        if (null !== $data && !array_key_exists('data', $options)) {
+        if (null !== $data && !\array_key_exists('data', $options)) {
             $options['data'] = $data;
-        }
-
-        if (!is_string($type)) {
-            throw new UnexpectedTypeException($type, 'string');
         }
 
         $type = $this->registry->getType($type);
 
-        $builder = $type->createBuilder($this, $name, $options);
+        $builder = $type->createBuilder($this, (string) $name, $options);
 
         // Explicitly call buildForm() in order to be able to override either
         // createBuilder() or buildForm() in the resolved form type
@@ -85,7 +75,7 @@ class FormFactory implements FormFactoryInterface
     /**
      * {@inheritdoc}
      */
-    public function createBuilderForProperty($class, $property, $data = null, array $options = array())
+    public function createBuilderForProperty(string $class, string $property, $data = null, array $options = [])
     {
         if (null === $guesser = $this->registry->getTypeGuesser()) {
             return $this->createNamedBuilder($property, 'Symfony\Component\Form\Extension\Core\Type\TextType', $data, $options);
@@ -102,23 +92,23 @@ class FormFactory implements FormFactoryInterface
         $pattern = $patternGuess ? $patternGuess->getValue() : null;
 
         if (null !== $pattern) {
-            $options = array_replace_recursive(array('attr' => array('pattern' => $pattern)), $options);
+            $options = array_replace_recursive(['attr' => ['pattern' => $pattern]], $options);
         }
 
         if (null !== $maxLength) {
-            $options = array_replace_recursive(array('attr' => array('maxlength' => $maxLength)), $options);
+            $options = array_replace_recursive(['attr' => ['maxlength' => $maxLength]], $options);
         }
 
         if ($requiredGuess) {
-            $options = array_merge(array('required' => $requiredGuess->getValue()), $options);
+            $options = array_merge(['required' => $requiredGuess->getValue()], $options);
         }
 
         // user options may override guessed options
         if ($typeGuess) {
-            $attrs = array();
+            $attrs = [];
             $typeGuessOptions = $typeGuess->getOptions();
             if (isset($typeGuessOptions['attr']) && isset($options['attr'])) {
-                $attrs = array('attr' => array_merge($typeGuessOptions['attr'], $options['attr']));
+                $attrs = ['attr' => array_merge($typeGuessOptions['attr'], $options['attr'])];
             }
 
             $options = array_merge($typeGuessOptions, $options, $attrs);

@@ -11,11 +11,11 @@
 
 namespace Symfony\Bridge\Doctrine\DependencyInjection;
 
-use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 use Symfony\Component\DependencyInjection\Alias;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
+use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 
 /**
  * This abstract classes groups common code that Doctrine Object Manager extensions (ORM, MongoDB, CouchDB) need.
@@ -27,16 +27,15 @@ abstract class AbstractDoctrineExtension extends Extension
     /**
      * Used inside metadata driver method to simplify aggregation of data.
      */
-    protected $aliasMap = array();
+    protected $aliasMap = [];
 
     /**
      * Used inside metadata driver method to simplify aggregation of data.
      */
-    protected $drivers = array();
+    protected $drivers = [];
 
     /**
-     * @param array            $objectManager A configured object manager
-     * @param ContainerBuilder $container     A ContainerBuilder instance
+     * @param array $objectManager A configured object manager
      *
      * @throws \InvalidArgumentException
      */
@@ -46,10 +45,10 @@ abstract class AbstractDoctrineExtension extends Extension
             // automatically register bundle mappings
             foreach (array_keys($container->getParameter('kernel.bundles')) as $bundle) {
                 if (!isset($objectManager['mappings'][$bundle])) {
-                    $objectManager['mappings'][$bundle] = array(
+                    $objectManager['mappings'][$bundle] = [
                         'mapping' => true,
                         'is_bundle' => true,
-                    );
+                    ];
                 }
             }
         }
@@ -59,11 +58,11 @@ abstract class AbstractDoctrineExtension extends Extension
                 continue;
             }
 
-            $mappingConfig = array_replace(array(
+            $mappingConfig = array_replace([
                 'dir' => false,
                 'type' => false,
                 'prefix' => false,
-            ), (array) $mappingConfig);
+            ], (array) $mappingConfig);
 
             $mappingConfig['dir'] = $container->getParameterBag()->resolveValue($mappingConfig['dir']);
             // a bundle configuration is detected by realizing that the specified dir is not absolute and existing
@@ -101,11 +100,8 @@ abstract class AbstractDoctrineExtension extends Extension
      * Register the alias for this mapping driver.
      *
      * Aliases can be used in the Query languages of all the Doctrine object managers to simplify writing tasks.
-     *
-     * @param array  $mappingConfig
-     * @param string $mappingName
      */
-    protected function setMappingDriverAlias($mappingConfig, $mappingName)
+    protected function setMappingDriverAlias(array $mappingConfig, string $mappingName)
     {
         if (isset($mappingConfig['alias'])) {
             $this->aliasMap[$mappingConfig['alias']] = $mappingConfig['prefix'];
@@ -117,12 +113,9 @@ abstract class AbstractDoctrineExtension extends Extension
     /**
      * Register the mapping driver configuration for later use with the object managers metadata driver chain.
      *
-     * @param array  $mappingConfig
-     * @param string $mappingName
-     *
      * @throws \InvalidArgumentException
      */
-    protected function setMappingDriverConfig(array $mappingConfig, $mappingName)
+    protected function setMappingDriverConfig(array $mappingConfig, string $mappingName)
     {
         $mappingDirectory = $mappingConfig['dir'];
         if (!is_dir($mappingDirectory)) {
@@ -141,7 +134,7 @@ abstract class AbstractDoctrineExtension extends Extension
      */
     protected function getMappingDriverBundleConfigDefaults(array $bundleConfig, \ReflectionClass $bundle, ContainerBuilder $container)
     {
-        $bundleDir = dirname($bundle->getFileName());
+        $bundleDir = \dirname($bundle->getFileName());
 
         if (!$bundleConfig['type']) {
             $bundleConfig['type'] = $this->detectMetadataDriver($bundleDir, $container);
@@ -153,7 +146,7 @@ abstract class AbstractDoctrineExtension extends Extension
         }
 
         if (!$bundleConfig['dir']) {
-            if (in_array($bundleConfig['type'], array('annotation', 'staticphp'))) {
+            if (\in_array($bundleConfig['type'], ['annotation', 'staticphp'])) {
                 $bundleConfig['dir'] = $bundleDir.'/'.$this->getMappingObjectDefaultName();
             } else {
                 $bundleConfig['dir'] = $bundleDir.'/'.$this->getMappingResourceConfigDirectory();
@@ -171,11 +164,8 @@ abstract class AbstractDoctrineExtension extends Extension
 
     /**
      * Register all the collected mapping information with the object manager by registering the appropriate mapping drivers.
-     *
-     * @param array            $objectManager
-     * @param ContainerBuilder $container     A ContainerBuilder instance
      */
-    protected function registerMappingDrivers($objectManager, ContainerBuilder $container)
+    protected function registerMappingDrivers(array $objectManager, ContainerBuilder $container)
     {
         // configure metadata driver for each bundle based on the type of mapping files found
         if ($container->hasDefinition($this->getObjectManagerElementName($objectManager['name'].'_metadata_driver'))) {
@@ -197,25 +187,25 @@ abstract class AbstractDoctrineExtension extends Extension
                 }
                 $mappingDriverDef->setArguments($args);
             } elseif ('annotation' == $driverType) {
-                $mappingDriverDef = new Definition('%'.$this->getObjectManagerElementName('metadata.'.$driverType.'.class%'), array(
+                $mappingDriverDef = new Definition('%'.$this->getObjectManagerElementName('metadata.'.$driverType.'.class%'), [
                     new Reference($this->getObjectManagerElementName('metadata.annotation_reader')),
                     array_values($driverPaths),
-                ));
+                ]);
             } else {
-                $mappingDriverDef = new Definition('%'.$this->getObjectManagerElementName('metadata.'.$driverType.'.class%'), array(
+                $mappingDriverDef = new Definition('%'.$this->getObjectManagerElementName('metadata.'.$driverType.'.class%'), [
                     array_values($driverPaths),
-                ));
+                ]);
             }
             $mappingDriverDef->setPublic(false);
             if (false !== strpos($mappingDriverDef->getClass(), 'yml') || false !== strpos($mappingDriverDef->getClass(), 'xml')) {
-                $mappingDriverDef->setArguments(array(array_flip($driverPaths)));
-                $mappingDriverDef->addMethodCall('setGlobalBasename', array('mapping'));
+                $mappingDriverDef->setArguments([array_flip($driverPaths)]);
+                $mappingDriverDef->addMethodCall('setGlobalBasename', ['mapping']);
             }
 
             $container->setDefinition($mappingService, $mappingDriverDef);
 
             foreach ($driverPaths as $prefix => $driverPath) {
-                $chainDriverDef->addMethodCall('addDriver', array(new Reference($mappingService), $prefix));
+                $chainDriverDef->addMethodCall('addDriver', [new Reference($mappingService), $prefix]);
             }
         }
 
@@ -225,12 +215,9 @@ abstract class AbstractDoctrineExtension extends Extension
     /**
      * Assertion if the specified mapping information is valid.
      *
-     * @param array  $mappingConfig
-     * @param string $objectManagerName
-     *
      * @throws \InvalidArgumentException
      */
-    protected function assertValidMappingConfiguration(array $mappingConfig, $objectManagerName)
+    protected function assertValidMappingConfiguration(array $mappingConfig, string $objectManagerName)
     {
         if (!$mappingConfig['type'] || !$mappingConfig['dir'] || !$mappingConfig['prefix']) {
             throw new \InvalidArgumentException(sprintf('Mapping definitions for Doctrine manager "%s" require at least the "type", "dir" and "prefix" options.', $objectManagerName));
@@ -240,7 +227,7 @@ abstract class AbstractDoctrineExtension extends Extension
             throw new \InvalidArgumentException(sprintf('Specified non-existing directory "%s" as Doctrine mapping source.', $mappingConfig['dir']));
         }
 
-        if (!in_array($mappingConfig['type'], array('xml', 'yml', 'annotation', 'php', 'staticphp'))) {
+        if (!\in_array($mappingConfig['type'], ['xml', 'yml', 'annotation', 'php', 'staticphp'])) {
             throw new \InvalidArgumentException(sprintf('Can only configure "xml", "yml", "annotation", "php" or '.
                 '"staticphp" through the DoctrineBundle. Use your own bundle to configure other metadata drivers. '.
                 'You can register them by adding a new driver to the '.
@@ -252,12 +239,9 @@ abstract class AbstractDoctrineExtension extends Extension
     /**
      * Detects what metadata driver to use for the supplied directory.
      *
-     * @param string           $dir       A directory path
-     * @param ContainerBuilder $container A ContainerBuilder instance
-     *
      * @return string|null A metadata driver short name, if one can be detected
      */
-    protected function detectMetadataDriver($dir, ContainerBuilder $container)
+    protected function detectMetadataDriver(string $dir, ContainerBuilder $container)
     {
         $configPath = $this->getMappingResourceConfigDirectory();
         $extension = $this->getMappingResourceExtension();
@@ -272,7 +256,7 @@ abstract class AbstractDoctrineExtension extends Extension
             // add the closest existing directory as a resource
             $resource = $dir.'/'.$configPath;
             while (!is_dir($resource)) {
-                $resource = dirname($resource);
+                $resource = \dirname($resource);
             }
             $container->fileExists($resource, false);
 
@@ -286,13 +270,9 @@ abstract class AbstractDoctrineExtension extends Extension
     /**
      * Loads a configured object manager metadata, query or result cache driver.
      *
-     * @param array            $objectManager A configured object manager
-     * @param ContainerBuilder $container     A ContainerBuilder instance
-     * @param string           $cacheName
-     *
      * @throws \InvalidArgumentException in case of unknown driver type
      */
-    protected function loadObjectManagerCacheDriver(array $objectManager, ContainerBuilder $container, $cacheName)
+    protected function loadObjectManagerCacheDriver(array $objectManager, ContainerBuilder $container, string $cacheName)
     {
         $this->loadCacheDriver($cacheName, $objectManager['name'], $objectManager[$cacheName.'_driver'], $container);
     }
@@ -300,16 +280,11 @@ abstract class AbstractDoctrineExtension extends Extension
     /**
      * Loads a cache driver.
      *
-     * @param string           $cacheName         The cache driver name
-     * @param string           $objectManagerName The object manager name
-     * @param array            $cacheDriver       The cache driver mapping
-     * @param ContainerBuilder $container         The ContainerBuilder instance
-     *
      * @return string
      *
      * @throws \InvalidArgumentException
      */
-    protected function loadCacheDriver($cacheName, $objectManagerName, array $cacheDriver, ContainerBuilder $container)
+    protected function loadCacheDriver(string $cacheName, string $objectManagerName, array $cacheDriver, ContainerBuilder $container)
     {
         $cacheDriverServiceId = $this->getObjectManagerElementName($objectManagerName.'_'.$cacheName);
 
@@ -326,11 +301,11 @@ abstract class AbstractDoctrineExtension extends Extension
                 $cacheDef = new Definition($memcachedClass);
                 $memcachedInstance = new Definition($memcachedInstanceClass);
                 $memcachedInstance->setPrivate(true);
-                $memcachedInstance->addMethodCall('addServer', array(
+                $memcachedInstance->addMethodCall('addServer', [
                     $memcachedHost, $memcachedPort,
-                ));
+                ]);
                 $container->setDefinition($this->getObjectManagerElementName(sprintf('%s_memcached_instance', $objectManagerName)), $memcachedInstance);
-                $cacheDef->addMethodCall('setMemcached', array(new Reference($this->getObjectManagerElementName(sprintf('%s_memcached_instance', $objectManagerName)))));
+                $cacheDef->addMethodCall('setMemcached', [new Reference($this->getObjectManagerElementName(sprintf('%s_memcached_instance', $objectManagerName)))]);
                 break;
              case 'redis':
                 $redisClass = !empty($cacheDriver['class']) ? $cacheDriver['class'] : '%'.$this->getObjectManagerElementName('cache.redis.class').'%';
@@ -340,11 +315,11 @@ abstract class AbstractDoctrineExtension extends Extension
                 $cacheDef = new Definition($redisClass);
                 $redisInstance = new Definition($redisInstanceClass);
                 $redisInstance->setPrivate(true);
-                $redisInstance->addMethodCall('connect', array(
+                $redisInstance->addMethodCall('connect', [
                     $redisHost, $redisPort,
-                ));
+                ]);
                 $container->setDefinition($this->getObjectManagerElementName(sprintf('%s_redis_instance', $objectManagerName)), $redisInstance);
-                $cacheDef->addMethodCall('setRedis', array(new Reference($this->getObjectManagerElementName(sprintf('%s_redis_instance', $objectManagerName)))));
+                $cacheDef->addMethodCall('setRedis', [new Reference($this->getObjectManagerElementName(sprintf('%s_redis_instance', $objectManagerName)))]);
                 break;
             case 'apc':
             case 'apcu':
@@ -365,15 +340,15 @@ abstract class AbstractDoctrineExtension extends Extension
             if ($container->hasParameter('cache.prefix.seed')) {
                 $seed = '.'.$container->getParameterBag()->resolveValue($container->getParameter('cache.prefix.seed'));
             } else {
-                $seed = '_'.$container->getParameter('kernel.root_dir');
+                $seed = '_'.$container->getParameter('kernel.project_dir');
             }
-            $seed .= '.'.$container->getParameter('kernel.name').'.'.$container->getParameter('kernel.environment').'.'.$container->getParameter('kernel.debug');
+            $seed .= '.'.$container->getParameter('kernel.container_class');
             $namespace = 'sf_'.$this->getMappingResourceExtension().'_'.$objectManagerName.'_'.ContainerBuilder::hash($seed);
 
             $cacheDriver['namespace'] = $namespace;
         }
 
-        $cacheDef->addMethodCall('setNamespace', array($cacheDriver['namespace']));
+        $cacheDef->addMethodCall('setNamespace', [$cacheDriver['namespace']]);
 
         $container->setDefinition($cacheDriverServiceId, $cacheDef);
 
@@ -396,10 +371,10 @@ abstract class AbstractDoctrineExtension extends Extension
                         continue 2;
                     }
                 }
-                $managerConfigs[$autoMappedManager]['mappings'][$bundle] = array(
+                $managerConfigs[$autoMappedManager]['mappings'][$bundle] = [
                     'mapping' => true,
                     'is_bundle' => true,
-                );
+                ];
             }
             $managerConfigs[$autoMappedManager]['auto_mapping'] = false;
         }
@@ -412,11 +387,9 @@ abstract class AbstractDoctrineExtension extends Extension
      *
      * @example $name is 'entity_manager' then the result would be 'doctrine.orm.entity_manager'
      *
-     * @param string $name
-     *
      * @return string
      */
-    abstract protected function getObjectManagerElementName($name);
+    abstract protected function getObjectManagerElementName(string $name);
 
     /**
      * Noun that describes the mapped objects such as Entity or Document.
@@ -444,11 +417,9 @@ abstract class AbstractDoctrineExtension extends Extension
     /**
      * Search for a manager that is declared as 'auto_mapping' = true.
      *
-     * @return null|string The name of the manager. If no one manager is found, returns null
-     *
      * @throws \LogicException
      */
-    private function validateAutoMapping(array $managerConfigs)
+    private function validateAutoMapping(array $managerConfigs): ?string
     {
         $autoMappedManager = null;
         foreach ($managerConfigs as $name => $manager) {

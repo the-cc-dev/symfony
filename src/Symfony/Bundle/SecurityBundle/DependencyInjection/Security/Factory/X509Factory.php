@@ -23,7 +23,7 @@ use Symfony\Component\DependencyInjection\Reference;
  */
 class X509Factory implements SecurityFactoryInterface
 {
-    public function create(ContainerBuilder $container, $id, $config, $userProvider, $defaultEntryPoint)
+    public function create(ContainerBuilder $container, string $id, array $config, string $userProvider, ?string $defaultEntryPoint)
     {
         $providerId = 'security.authentication.provider.pre_authenticated.'.$id;
         $container
@@ -39,8 +39,9 @@ class X509Factory implements SecurityFactoryInterface
         $listener->replaceArgument(2, $id);
         $listener->replaceArgument(3, $config['user']);
         $listener->replaceArgument(4, $config['credentials']);
+        $listener->addMethodCall('setSessionAuthenticationStrategy', [new Reference('security.authentication.session_strategy.'.$id)]);
 
-        return array($providerId, $listenerId, $defaultEntryPoint);
+        return [$providerId, $listenerId, $defaultEntryPoint];
     }
 
     public function getPosition()

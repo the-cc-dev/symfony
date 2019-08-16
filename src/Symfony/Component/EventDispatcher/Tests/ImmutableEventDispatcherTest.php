@@ -11,9 +11,10 @@
 
 namespace Symfony\Component\EventDispatcher\Tests;
 
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\EventDispatcher\Event;
 use Symfony\Component\EventDispatcher\ImmutableEventDispatcher;
+use Symfony\Contracts\EventDispatcher\Event;
 
 /**
  * @author Bernhard Schussek <bschussek@gmail.com>
@@ -21,7 +22,7 @@ use Symfony\Component\EventDispatcher\ImmutableEventDispatcher;
 class ImmutableEventDispatcherTest extends TestCase
 {
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject
+     * @var MockObject
      */
     private $innerDispatcher;
 
@@ -30,7 +31,7 @@ class ImmutableEventDispatcherTest extends TestCase
      */
     private $dispatcher;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->innerDispatcher = $this->getMockBuilder('Symfony\Component\EventDispatcher\EventDispatcherInterface')->getMock();
         $this->dispatcher = new ImmutableEventDispatcher($this->innerDispatcher);
@@ -39,13 +40,15 @@ class ImmutableEventDispatcherTest extends TestCase
     public function testDispatchDelegates()
     {
         $event = new Event();
+        $expectedResult = new class() {
+        };
 
         $this->innerDispatcher->expects($this->once())
             ->method('dispatch')
-            ->with('event', $event)
-            ->will($this->returnValue('result'));
+            ->with($event, 'event')
+            ->willReturn($expectedResult);
 
-        $this->assertSame('result', $this->dispatcher->dispatch('event', $event));
+        $this->assertSame($expectedResult, $this->dispatcher->dispatch($event, 'event'));
     }
 
     public function testGetListenersDelegates()
@@ -53,7 +56,7 @@ class ImmutableEventDispatcherTest extends TestCase
         $this->innerDispatcher->expects($this->once())
             ->method('getListeners')
             ->with('event')
-            ->will($this->returnValue('result'));
+            ->willReturn('result');
 
         $this->assertSame('result', $this->dispatcher->getListeners('event'));
     }
@@ -63,42 +66,34 @@ class ImmutableEventDispatcherTest extends TestCase
         $this->innerDispatcher->expects($this->once())
             ->method('hasListeners')
             ->with('event')
-            ->will($this->returnValue('result'));
+            ->willReturn('result');
 
         $this->assertSame('result', $this->dispatcher->hasListeners('event'));
     }
 
-    /**
-     * @expectedException \BadMethodCallException
-     */
     public function testAddListenerDisallowed()
     {
+        $this->expectException('\BadMethodCallException');
         $this->dispatcher->addListener('event', function () { return 'foo'; });
     }
 
-    /**
-     * @expectedException \BadMethodCallException
-     */
     public function testAddSubscriberDisallowed()
     {
+        $this->expectException('\BadMethodCallException');
         $subscriber = $this->getMockBuilder('Symfony\Component\EventDispatcher\EventSubscriberInterface')->getMock();
 
         $this->dispatcher->addSubscriber($subscriber);
     }
 
-    /**
-     * @expectedException \BadMethodCallException
-     */
     public function testRemoveListenerDisallowed()
     {
+        $this->expectException('\BadMethodCallException');
         $this->dispatcher->removeListener('event', function () { return 'foo'; });
     }
 
-    /**
-     * @expectedException \BadMethodCallException
-     */
     public function testRemoveSubscriberDisallowed()
     {
+        $this->expectException('\BadMethodCallException');
         $subscriber = $this->getMockBuilder('Symfony\Component\EventDispatcher\EventSubscriberInterface')->getMock();
 
         $this->dispatcher->removeSubscriber($subscriber);

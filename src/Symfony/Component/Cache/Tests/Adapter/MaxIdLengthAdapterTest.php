@@ -19,29 +19,55 @@ class MaxIdLengthAdapterTest extends TestCase
     public function testLongKey()
     {
         $cache = $this->getMockBuilder(MaxIdLengthAdapter::class)
-            ->setConstructorArgs(array(str_repeat('-', 10)))
-            ->setMethods(array('doHave', 'doFetch', 'doDelete', 'doSave', 'doClear'))
+            ->setConstructorArgs([str_repeat('-', 10)])
+            ->setMethods(['doHave', 'doFetch', 'doDelete', 'doSave', 'doClear'])
             ->getMock();
 
         $cache->expects($this->exactly(2))
             ->method('doHave')
             ->withConsecutive(
-                array($this->equalTo('----------:0GTYWa9n4ed8vqNlOT2iEr:')),
-                array($this->equalTo('----------:---------------------------------------'))
+                [$this->equalTo('----------:nWfzGiCgLczv3SSUzXL3kg:')],
+                [$this->equalTo('----------:---------------------------------------')]
             );
 
         $cache->hasItem(str_repeat('-', 40));
         $cache->hasItem(str_repeat('-', 39));
     }
 
-    /**
-     * @expectedException \Symfony\Component\Cache\Exception\InvalidArgumentException
-     * @expectedExceptionMessage Namespace must be 26 chars max, 40 given ("----------------------------------------")
-     */
-    public function testTooLongNamespace()
+    public function testLongKeyVersioning()
     {
         $cache = $this->getMockBuilder(MaxIdLengthAdapter::class)
-            ->setConstructorArgs(array(str_repeat('-', 40)))
+            ->setConstructorArgs([str_repeat('-', 26)])
+            ->getMock();
+
+        $reflectionClass = new \ReflectionClass(AbstractAdapter::class);
+
+        $reflectionMethod = $reflectionClass->getMethod('getId');
+        $reflectionMethod->setAccessible(true);
+
+        // No versioning enabled
+        $this->assertEquals('--------------------------:------------', $reflectionMethod->invokeArgs($cache, [str_repeat('-', 12)]));
+        $this->assertLessThanOrEqual(50, \strlen($reflectionMethod->invokeArgs($cache, [str_repeat('-', 12)])));
+        $this->assertLessThanOrEqual(50, \strlen($reflectionMethod->invokeArgs($cache, [str_repeat('-', 23)])));
+        $this->assertLessThanOrEqual(50, \strlen($reflectionMethod->invokeArgs($cache, [str_repeat('-', 40)])));
+
+        $reflectionProperty = $reflectionClass->getProperty('versioningIsEnabled');
+        $reflectionProperty->setAccessible(true);
+        $reflectionProperty->setValue($cache, true);
+
+        // Versioning enabled
+        $this->assertEquals('--------------------------:1:------------', $reflectionMethod->invokeArgs($cache, [str_repeat('-', 12)]));
+        $this->assertLessThanOrEqual(50, \strlen($reflectionMethod->invokeArgs($cache, [str_repeat('-', 12)])));
+        $this->assertLessThanOrEqual(50, \strlen($reflectionMethod->invokeArgs($cache, [str_repeat('-', 23)])));
+        $this->assertLessThanOrEqual(50, \strlen($reflectionMethod->invokeArgs($cache, [str_repeat('-', 40)])));
+    }
+
+    public function testTooLongNamespace()
+    {
+        $this->expectException('Symfony\Component\Cache\Exception\InvalidArgumentException');
+        $this->expectExceptionMessage('Namespace must be 26 chars max, 40 given ("----------------------------------------")');
+        $cache = $this->getMockBuilder(MaxIdLengthAdapter::class)
+            ->setConstructorArgs([str_repeat('-', 40)])
             ->getMock();
     }
 }

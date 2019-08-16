@@ -37,8 +37,6 @@ interface AuthenticatorInterface extends AuthenticationEntryPointInterface
      *
      * If this returns false, the authenticator will be skipped.
      *
-     * @param Request $request
-     *
      * @return bool
      */
     public function supports(Request $request);
@@ -51,16 +49,14 @@ interface AuthenticatorInterface extends AuthenticationEntryPointInterface
      *
      * For example, for a form login, you might:
      *
-     *      return array(
+     *      return [
      *          'username' => $request->request->get('_username'),
      *          'password' => $request->request->get('_password'),
-     *      );
+     *      ];
      *
      * Or for an API token that's on a header, you might use:
      *
-     *      return array('api_key' => $request->headers->get('X-API-TOKEN'));
-     *
-     * @param Request $request
+     *      return ['api_key' => $request->headers->get('X-API-TOKEN')];
      *
      * @return mixed Any non-null value
      *
@@ -76,8 +72,7 @@ interface AuthenticatorInterface extends AuthenticationEntryPointInterface
      * You may throw an AuthenticationException if you wish. If you return
      * null, then a UsernameNotFoundException is thrown for you.
      *
-     * @param mixed                 $credentials
-     * @param UserProviderInterface $userProvider
+     * @param mixed $credentials
      *
      * @throws AuthenticationException
      *
@@ -94,8 +89,7 @@ interface AuthenticatorInterface extends AuthenticationEntryPointInterface
      *
      * The *credentials* are the return value from getCredentials()
      *
-     * @param mixed         $credentials
-     * @param UserInterface $user
+     * @param mixed $credentials
      *
      * @return bool
      *
@@ -112,12 +106,9 @@ interface AuthenticatorInterface extends AuthenticationEntryPointInterface
      *
      * @see AbstractGuardAuthenticator
      *
-     * @param UserInterface $user
-     * @param string        $providerKey The provider (i.e. firewall) key
-     *
      * @return GuardTokenInterface
      */
-    public function createAuthenticatedToken(UserInterface $user, $providerKey);
+    public function createAuthenticatedToken(UserInterface $user, string $providerKey);
 
     /**
      * Called when authentication executed, but failed (e.g. wrong username password).
@@ -127,9 +118,6 @@ interface AuthenticatorInterface extends AuthenticationEntryPointInterface
      *
      * If you return null, the request will continue, but the user will
      * not be authenticated. This is probably not what you want to do.
-     *
-     * @param Request                 $request
-     * @param AuthenticationException $exception
      *
      * @return Response|null
      */
@@ -144,13 +132,9 @@ interface AuthenticatorInterface extends AuthenticationEntryPointInterface
      * If you return null, the current request will continue, and the user
      * will be authenticated. This makes sense, for example, with an API.
      *
-     * @param Request        $request
-     * @param TokenInterface $token
-     * @param string         $providerKey The provider (i.e. firewall) key
-     *
      * @return Response|null
      */
-    public function onAuthenticationSuccess(Request $request, TokenInterface $token, $providerKey);
+    public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $providerKey);
 
     /**
      * Does this method support remember me cookies?

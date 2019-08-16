@@ -5,10 +5,9 @@ framework:
             messenger.bus.commands: ~
             messenger.bus.events:
                 middleware:
-                    - "allow_no_handler"
+                    - with_factory: [foo, true, { bar: baz }]
             messenger.bus.queries:
                 default_middleware: false
                 middleware:
-                    - "route_messages"
-                    - "allow_no_handler"
-                    - "call_message_handler"
+                    - "send_message"
+                    - "handle_message"

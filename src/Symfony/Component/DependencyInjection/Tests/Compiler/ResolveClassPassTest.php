@@ -15,6 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ChildDefinition;
 use Symfony\Component\DependencyInjection\Compiler\ResolveClassPass;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
 use Symfony\Component\DependencyInjection\Tests\Fixtures\CaseSensitiveClass;
 
 class ResolveClassPassTest extends TestCase
@@ -34,8 +35,8 @@ class ResolveClassPassTest extends TestCase
 
     public function provideValidClassId()
     {
-        yield array('Acme\UnknownClass');
-        yield array(CaseSensitiveClass::class);
+        yield ['Acme\UnknownClass'];
+        yield [CaseSensitiveClass::class];
     }
 
     /**
@@ -53,9 +54,20 @@ class ResolveClassPassTest extends TestCase
 
     public function provideInvalidClassId()
     {
-        yield array(\stdClass::class);
-        yield array('bar');
-        yield array('\DateTime');
+        yield [\stdClass::class];
+        yield ['bar'];
+        yield ['\DateTime'];
+    }
+
+    public function testWontResolveClassFromClassIdWithLeadingBackslash()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Service definition "\App\Some\Service" has no class, and its name looks like a FQCN but it starts with a backslash; remove the leading backslash.');
+
+        $container = new ContainerBuilder();
+        $container->register('\App\Some\Service');
+
+        (new ResolveClassPass())->process($container);
     }
 
     public function testNonFqcnChildDefinition()
@@ -82,12 +94,10 @@ class ResolveClassPassTest extends TestCase
         $this->assertSame(self::class, $child->getClass());
     }
 
-    /**
-     * @expectedException \Symfony\Component\DependencyInjection\Exception\InvalidArgumentException
-     * @expectedExceptionMessage Service definition "App\Foo\Child" has a parent but no class, and its name looks like a FQCN. Either the class is missing or you want to inherit it from the parent service. To resolve this ambiguity, please rename this service to a non-FQCN (e.g. using dots), or create the missing class.
-     */
     public function testAmbiguousChildDefinition()
     {
+        $this->expectException('Symfony\Component\DependencyInjection\Exception\InvalidArgumentException');
+        $this->expectExceptionMessage('Service definition "App\Foo\Child" has a parent but no class, and its name looks like a FQCN. Either the class is missing or you want to inherit it from the parent service. To resolve this ambiguity, please rename this service to a non-FQCN (e.g. using dots), or create the missing class.');
         $container = new ContainerBuilder();
         $parent = $container->register('App\Foo', null);
         $child = $container->setDefinition('App\Foo\Child', new ChildDefinition('App\Foo'));

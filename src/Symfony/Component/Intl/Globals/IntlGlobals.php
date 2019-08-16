@@ -38,11 +38,11 @@ abstract class IntlGlobals
     /**
      * All known error codes.
      */
-    private static $errorCodes = array(
+    private static $errorCodes = [
         self::U_ZERO_ERROR => 'U_ZERO_ERROR',
         self::U_ILLEGAL_ARGUMENT_ERROR => 'U_ILLEGAL_ARGUMENT_ERROR',
         self::U_PARSE_ERROR => 'U_PARSE_ERROR',
-    );
+    ];
 
     /**
      * The error code of the last operation.
@@ -61,7 +61,7 @@ abstract class IntlGlobals
      *
      * @return bool
      */
-    public static function isFailure($errorCode)
+    public static function isFailure(int $errorCode)
     {
         return isset(self::$errorCodes[$errorCode])
             && $errorCode > self::U_ZERO_ERROR;
@@ -98,13 +98,9 @@ abstract class IntlGlobals
      *
      * @return string
      */
-    public static function getErrorName($code)
+    public static function getErrorName(int $code)
     {
-        if (isset(self::$errorCodes[$code])) {
-            return self::$errorCodes[$code];
-        }
-
-        return '[BOGUS UErrorCode]';
+        return self::$errorCodes[$code] ?? '[BOGUS UErrorCode]';
     }
 
     /**
@@ -115,7 +111,7 @@ abstract class IntlGlobals
      *
      * @throws \InvalidArgumentException If the code is not one of the error constants in this class
      */
-    public static function setError($code, $message = '')
+    public static function setError(int $code, string $message = '')
     {
         if (!isset(self::$errorCodes[$code])) {
             throw new \InvalidArgumentException(sprintf('No such error code: "%s"', $code));

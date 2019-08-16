@@ -22,14 +22,13 @@ class ButtonBuilderTest extends TestCase
 {
     public function getValidNames()
     {
-        return array(
-            array('reset'),
-            array('submit'),
-            array('foo'),
-            array('0'),
-            array(0),
-            array('button[]'),
-        );
+        return [
+            ['reset'],
+            ['submit'],
+            ['foo'],
+            ['0'],
+            [0],
+        ];
     }
 
     /**
@@ -40,13 +39,21 @@ class ButtonBuilderTest extends TestCase
         $this->assertInstanceOf('\Symfony\Component\Form\ButtonBuilder', new ButtonBuilder($name));
     }
 
+    public function testNameContainingIllegalCharacters()
+    {
+        $this->expectException('Symfony\Component\Form\Exception\InvalidArgumentException');
+        $this->expectExceptionMessage('The name "button[]" contains illegal characters. Names should start with a letter, digit or underscore and only contain letters, digits, numbers, underscores ("_"), hyphens ("-") and colons (":").');
+
+        $this->assertInstanceOf('\Symfony\Component\Form\ButtonBuilder', new ButtonBuilder('button[]'));
+    }
+
     public function getInvalidNames()
     {
-        return array(
-            array(''),
-            array(false),
-            array(null),
-        );
+        return [
+            [''],
+            [false],
+            [null],
+        ];
     }
 
     /**
@@ -54,12 +61,8 @@ class ButtonBuilderTest extends TestCase
      */
     public function testInvalidNames($name)
     {
-        if (method_exists($this, 'expectException')) {
-            $this->expectException(InvalidArgumentException::class);
-            $this->expectExceptionMessage('Buttons cannot have empty names.');
-        } else {
-            $this->setExpectedException(InvalidArgumentException::class, 'Buttons cannot have empty names.');
-        }
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Buttons cannot have empty names.');
         new ButtonBuilder($name);
     }
 }

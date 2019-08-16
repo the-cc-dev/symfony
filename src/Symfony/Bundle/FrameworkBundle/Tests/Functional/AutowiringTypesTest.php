@@ -15,66 +15,49 @@ use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\Common\Annotations\CachedReader;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\EventDispatcher\EventDispatcher;
-use Symfony\Component\Templating\EngineInterface as ComponentEngineInterface;
 use Symfony\Component\HttpKernel\Debug\TraceableEventDispatcher;
-use Symfony\Bundle\FrameworkBundle\Templating\EngineInterface as FrameworkBundleEngineInterface;
 
-class AutowiringTypesTest extends WebTestCase
+class AutowiringTypesTest extends AbstractWebTestCase
 {
     public function testAnnotationReaderAutowiring()
     {
-        static::bootKernel(array('root_config' => 'no_annotations_cache.yml', 'environment' => 'no_annotations_cache'));
-        $container = static::$kernel->getContainer();
+        static::bootKernel(['root_config' => 'no_annotations_cache.yml', 'environment' => 'no_annotations_cache']);
 
-        $annotationReader = $container->get('test.autowiring_types.autowired_services')->getAnnotationReader();
+        $annotationReader = static::$container->get('test.autowiring_types.autowired_services')->getAnnotationReader();
         $this->assertInstanceOf(AnnotationReader::class, $annotationReader);
     }
 
     public function testCachedAnnotationReaderAutowiring()
     {
         static::bootKernel();
-        $container = static::$kernel->getContainer();
 
-        $annotationReader = $container->get('test.autowiring_types.autowired_services')->getAnnotationReader();
+        $annotationReader = static::$container->get('test.autowiring_types.autowired_services')->getAnnotationReader();
         $this->assertInstanceOf(CachedReader::class, $annotationReader);
-    }
-
-    public function testTemplatingAutowiring()
-    {
-        static::bootKernel();
-        $container = static::$kernel->getContainer();
-
-        $autowiredServices = $container->get('test.autowiring_types.autowired_services');
-        $this->assertInstanceOf(FrameworkBundleEngineInterface::class, $autowiredServices->getFrameworkBundleEngine());
-        $this->assertInstanceOf(ComponentEngineInterface::class, $autowiredServices->getEngine());
     }
 
     public function testEventDispatcherAutowiring()
     {
-        static::bootKernel(array('debug' => false));
-        $container = static::$kernel->getContainer();
+        static::bootKernel(['debug' => false]);
 
-        $autowiredServices = $container->get('test.autowiring_types.autowired_services');
+        $autowiredServices = static::$container->get('test.autowiring_types.autowired_services');
         $this->assertInstanceOf(EventDispatcher::class, $autowiredServices->getDispatcher(), 'The event_dispatcher service should be injected if the debug is not enabled');
 
-        static::bootKernel(array('debug' => true));
-        $container = static::$kernel->getContainer();
+        static::bootKernel(['debug' => true]);
 
-        $autowiredServices = $container->get('test.autowiring_types.autowired_services');
+        $autowiredServices = static::$container->get('test.autowiring_types.autowired_services');
         $this->assertInstanceOf(TraceableEventDispatcher::class, $autowiredServices->getDispatcher(), 'The debug.event_dispatcher service should be injected if the debug is enabled');
     }
 
     public function testCacheAutowiring()
     {
         static::bootKernel();
-        $container = static::$kernel->getContainer();
 
-        $autowiredServices = $container->get('test.autowiring_types.autowired_services');
+        $autowiredServices = static::$container->get('test.autowiring_types.autowired_services');
         $this->assertInstanceOf(FilesystemAdapter::class, $autowiredServices->getCachePool());
     }
 
-    protected static function createKernel(array $options = array())
+    protected static function createKernel(array $options = [])
     {
-        return parent::createKernel(array('test_case' => 'AutowiringTypes') + $options);
+        return parent::createKernel(['test_case' => 'AutowiringTypes'] + $options);
     }
 }

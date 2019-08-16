@@ -11,6 +11,7 @@
 
 namespace Symfony\Bundle\FrameworkBundle\Tests\Command;
 
+use PHPUnit\Framework\MockObject\MockObject;
 use Symfony\Bundle\FrameworkBundle\Command\CachePoolPruneCommand;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Tests\TestCase;
@@ -24,13 +25,13 @@ class CachePruneCommandTest extends TestCase
     public function testCommandWithPools()
     {
         $tester = $this->getCommandTester($this->getKernel(), $this->getRewindableGenerator());
-        $tester->execute(array());
+        $tester->execute([]);
     }
 
     public function testCommandWithNoPools()
     {
         $tester = $this->getCommandTester($this->getKernel(), $this->getEmptyRewindableGenerator());
-        $tester->execute(array());
+        $tester->execute([]);
     }
 
     private function getRewindableGenerator(): RewindableGenerator
@@ -44,12 +45,12 @@ class CachePruneCommandTest extends TestCase
     private function getEmptyRewindableGenerator(): RewindableGenerator
     {
         return new RewindableGenerator(function () {
-            return new \ArrayIterator(array());
+            return new \ArrayIterator([]);
         }, 0);
     }
 
     /**
-     * @return \PHPUnit_Framework_MockObject_MockObject|KernelInterface
+     * @return MockObject|KernelInterface
      */
     private function getKernel()
     {
@@ -69,13 +70,13 @@ class CachePruneCommandTest extends TestCase
         $kernel
             ->expects($this->once())
             ->method('getBundles')
-            ->willReturn(array());
+            ->willReturn([]);
 
         return $kernel;
     }
 
     /**
-     * @return \PHPUnit_Framework_MockObject_MockObject|PruneableInterface
+     * @return MockObject|PruneableInterface
      */
     private function getPruneableInterfaceMock()
     {

@@ -28,8 +28,8 @@ class EntityType extends DoctrineType
         // Invoke the query builder closure so that we can cache choice lists
         // for equal query builders
         $queryBuilderNormalizer = function (Options $options, $queryBuilder) {
-            if (is_callable($queryBuilder)) {
-                $queryBuilder = call_user_func($queryBuilder, $options['em']->getRepository($options['class']));
+            if (\is_callable($queryBuilder)) {
+                $queryBuilder = $queryBuilder($options['em']->getRepository($options['class']));
 
                 if (null !== $queryBuilder && !$queryBuilder instanceof QueryBuilder) {
                     throw new UnexpectedTypeException($queryBuilder, 'Doctrine\ORM\QueryBuilder');
@@ -40,19 +40,15 @@ class EntityType extends DoctrineType
         };
 
         $resolver->setNormalizer('query_builder', $queryBuilderNormalizer);
-        $resolver->setAllowedTypes('query_builder', array('null', 'callable', 'Doctrine\ORM\QueryBuilder'));
+        $resolver->setAllowedTypes('query_builder', ['null', 'callable', 'Doctrine\ORM\QueryBuilder']);
     }
 
     /**
      * Return the default loader object.
      *
-     * @param ObjectManager $manager
-     * @param QueryBuilder  $queryBuilder
-     * @param string        $class
-     *
      * @return ORMQueryBuilderLoader
      */
-    public function getLoader(ObjectManager $manager, $queryBuilder, $class)
+    public function getLoader(ObjectManager $manager, QueryBuilder $queryBuilder, string $class)
     {
         return new ORMQueryBuilderLoader($queryBuilder);
     }
@@ -69,28 +65,24 @@ class EntityType extends DoctrineType
      * We consider two query builders with an equal SQL string and
      * equal parameters to be equal.
      *
-     * @param QueryBuilder $queryBuilder
-     *
      * @return array
      *
      * @internal This method is public to be usable as callback. It should not
      *           be used in user code.
      */
-    public function getQueryBuilderPartsForCachingHash($queryBuilder)
+    public function getQueryBuilderPartsForCachingHash(QueryBuilder $queryBuilder)
     {
-        return array(
+        return [
             $queryBuilder->getQuery()->getSQL(),
-            array_map(array($this, 'parameterToArray'), $queryBuilder->getParameters()->toArray()),
-        );
+            array_map([$this, 'parameterToArray'], $queryBuilder->getParameters()->toArray()),
+        ];
     }
 
     /**
      * Converts a query parameter to an array.
-     *
-     * @return array The array representation of the parameter
      */
-    private function parameterToArray(Parameter $parameter)
+    private function parameterToArray(Parameter $parameter): array
     {
-        return array($parameter->getName(), $parameter->getType(), $parameter->getValue());
+        return [$parameter->getName(), $parameter->getType(), $parameter->getValue()];
     }
 }

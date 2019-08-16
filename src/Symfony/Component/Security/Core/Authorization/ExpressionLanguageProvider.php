@@ -23,7 +23,7 @@ class ExpressionLanguageProvider implements ExpressionFunctionProviderInterface
 {
     public function getFunctions()
     {
-        return array(
+        return [
             new ExpressionFunction('is_anonymous', function () {
                 return '$trust_resolver->isAnonymous($token)';
             }, function (array $variables) {
@@ -42,17 +42,17 @@ class ExpressionLanguageProvider implements ExpressionFunctionProviderInterface
                 return $variables['trust_resolver']->isFullFledged($variables['token']);
             }),
 
+            new ExpressionFunction('is_granted', function ($attributes, $object = 'null') {
+                return sprintf('$auth_checker->isGranted(%s, %s)', $attributes, $object);
+            }, function (array $variables, $attributes, $object = null) {
+                return $variables['auth_checker']->isGranted($attributes, $object);
+            }),
+
             new ExpressionFunction('is_remember_me', function () {
                 return '$trust_resolver->isRememberMe($token)';
             }, function (array $variables) {
                 return $variables['trust_resolver']->isRememberMe($variables['token']);
             }),
-
-            new ExpressionFunction('has_role', function ($role) {
-                return sprintf('in_array(%s, $roles)', $role);
-            }, function (array $variables, $role) {
-                return in_array($role, $variables['roles']);
-            }),
-        );
+        ];
     }
 }

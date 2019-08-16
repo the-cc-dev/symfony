@@ -15,14 +15,14 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Bundle\FrameworkBundle\DependencyInjection\Compiler\DataCollectorTranslatorPass;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
-use Symfony\Component\Translation\TranslatorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 class DataCollectorTranslatorPassTest extends TestCase
 {
     private $container;
     private $dataCollectorTranslatorPass;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->container = new ContainerBuilder();
         $this->dataCollectorTranslatorPass = new DataCollectorTranslatorPass();
@@ -33,11 +33,11 @@ class DataCollectorTranslatorPassTest extends TestCase
         $this->container->register('translator.data_collector', 'Symfony\Component\Translation\DataCollectorTranslator')
             ->setPublic(false)
             ->setDecoratedService('translator')
-            ->setArguments(array(new Reference('translator.data_collector.inner')))
+            ->setArguments([new Reference('translator.data_collector.inner')])
         ;
 
         $this->container->register('data_collector.translation', 'Symfony\Component\Translation\DataCollector\TranslationDataCollector')
-            ->setArguments(array(new Reference('translator.data_collector')))
+            ->setArguments([new Reference('translator.data_collector')])
         ;
     }
 
@@ -67,10 +67,10 @@ class DataCollectorTranslatorPassTest extends TestCase
 
     public function getImplementingTranslatorBagInterfaceTranslatorClassNames()
     {
-        return array(
-            array('Symfony\Component\Translation\Translator'),
-            array('%translator_implementing_bag%'),
-        );
+        return [
+            ['Symfony\Component\Translation\Translator'],
+            ['%translator_implementing_bag%'],
+        ];
     }
 
     /**
@@ -99,28 +99,16 @@ class DataCollectorTranslatorPassTest extends TestCase
 
     public function getNotImplementingTranslatorBagInterfaceTranslatorClassNames()
     {
-        return array(
-            array('Symfony\Bundle\FrameworkBundle\Tests\DependencyInjection\Compiler\TranslatorWithTranslatorBag'),
-            array('%translator_not_implementing_bag%'),
-        );
+        return [
+            ['Symfony\Bundle\FrameworkBundle\Tests\DependencyInjection\Compiler\TranslatorWithTranslatorBag'],
+            ['%translator_not_implementing_bag%'],
+        ];
     }
 }
 
 class TranslatorWithTranslatorBag implements TranslatorInterface
 {
-    public function trans($id, array $parameters = array(), $domain = null, $locale = null)
-    {
-    }
-
-    public function transChoice($id, $number, array $parameters = array(), $domain = null, $locale = null)
-    {
-    }
-
-    public function setLocale($locale)
-    {
-    }
-
-    public function getLocale()
+    public function trans($id, array $parameters = [], $domain = null, $locale = null)
     {
     }
 }

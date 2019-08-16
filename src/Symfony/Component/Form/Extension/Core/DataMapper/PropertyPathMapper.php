@@ -33,11 +33,11 @@ class PropertyPathMapper implements DataMapperInterface
     /**
      * {@inheritdoc}
      */
-    public function mapDataToForms($data, $forms)
+    public function mapDataToForms($data, iterable $forms)
     {
-        $empty = null === $data || array() === $data;
+        $empty = null === $data || [] === $data;
 
-        if (!$empty && !is_array($data) && !is_object($data)) {
+        if (!$empty && !\is_array($data) && !\is_object($data)) {
             throw new UnexpectedTypeException($data, 'object, array or empty');
         }
 
@@ -56,13 +56,13 @@ class PropertyPathMapper implements DataMapperInterface
     /**
      * {@inheritdoc}
      */
-    public function mapFormsToData($forms, &$data)
+    public function mapFormsToData(iterable $forms, &$data)
     {
         if (null === $data) {
             return;
         }
 
-        if (!is_array($data) && !is_object($data)) {
+        if (!\is_array($data) && !\is_object($data)) {
             throw new UnexpectedTypeException($data, 'object, array or empty');
         }
 
@@ -73,16 +73,17 @@ class PropertyPathMapper implements DataMapperInterface
             // Write-back is disabled if the form is not synchronized (transformation failed),
             // if the form was not submitted and if the form is disabled (modification not allowed)
             if (null !== $propertyPath && $config->getMapped() && $form->isSubmitted() && $form->isSynchronized() && !$form->isDisabled()) {
-                // If the field is of type DateTime and the data is the same skip the update to
+                $propertyValue = $form->getData();
+                // If the field is of type DateTimeInterface and the data is the same skip the update to
                 // keep the original object hash
-                if ($form->getData() instanceof \DateTime && $form->getData() == $this->propertyAccessor->getValue($data, $propertyPath)) {
+                if ($propertyValue instanceof \DateTimeInterface && $propertyValue == $this->propertyAccessor->getValue($data, $propertyPath)) {
                     continue;
                 }
 
                 // If the data is identical to the value in $data, we are
                 // dealing with a reference
-                if (!is_object($data) || !$config->getByReference() || $form->getData() !== $this->propertyAccessor->getValue($data, $propertyPath)) {
-                    $this->propertyAccessor->setValue($data, $propertyPath, $form->getData());
+                if (!\is_object($data) || !$config->getByReference() || $propertyValue !== $this->propertyAccessor->getValue($data, $propertyPath)) {
+                    $this->propertyAccessor->setValue($data, $propertyPath, $propertyValue);
                 }
             }
         }

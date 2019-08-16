@@ -33,38 +33,30 @@ class RoutingExtension extends AbstractExtension
     }
 
     /**
-     * Returns a list of functions to add to the existing list.
+     * {@inheritdoc}
      *
-     * @return array An array of functions
+     * @return TwigFunction[]
      */
     public function getFunctions()
     {
-        return array(
-            new TwigFunction('url', array($this, 'getUrl'), array('is_safe_callback' => array($this, 'isUrlGenerationSafe'))),
-            new TwigFunction('path', array($this, 'getPath'), array('is_safe_callback' => array($this, 'isUrlGenerationSafe'))),
-        );
+        return [
+            new TwigFunction('url', [$this, 'getUrl'], ['is_safe_callback' => [$this, 'isUrlGenerationSafe']]),
+            new TwigFunction('path', [$this, 'getPath'], ['is_safe_callback' => [$this, 'isUrlGenerationSafe']]),
+        ];
     }
 
     /**
-     * @param string $name
-     * @param array  $parameters
-     * @param bool   $relative
-     *
      * @return string
      */
-    public function getPath($name, $parameters = array(), $relative = false)
+    public function getPath(string $name, array $parameters = [], bool $relative = false)
     {
         return $this->generator->generate($name, $parameters, $relative ? UrlGeneratorInterface::RELATIVE_PATH : UrlGeneratorInterface::ABSOLUTE_PATH);
     }
 
     /**
-     * @param string $name
-     * @param array  $parameters
-     * @param bool   $schemeRelative
-     *
      * @return string
      */
-    public function getUrl($name, $parameters = array(), $schemeRelative = false)
+    public function getUrl(string $name, array $parameters = [], bool $schemeRelative = false)
     {
         return $this->generator->generate($name, $parameters, $schemeRelative ? UrlGeneratorInterface::NETWORK_PATH : UrlGeneratorInterface::ABSOLUTE_URL);
     }
@@ -93,20 +85,20 @@ class RoutingExtension extends AbstractExtension
      *
      * @final
      */
-    public function isUrlGenerationSafe(Node $argsNode)
+    public function isUrlGenerationSafe(Node $argsNode): array
     {
         // support named arguments
         $paramsNode = $argsNode->hasNode('parameters') ? $argsNode->getNode('parameters') : (
             $argsNode->hasNode(1) ? $argsNode->getNode(1) : null
         );
 
-        if (null === $paramsNode || $paramsNode instanceof ArrayExpression && count($paramsNode) <= 2 &&
+        if (null === $paramsNode || $paramsNode instanceof ArrayExpression && \count($paramsNode) <= 2 &&
             (!$paramsNode->hasNode(1) || $paramsNode->getNode(1) instanceof ConstantExpression)
         ) {
-            return array('html');
+            return ['html'];
         }
 
-        return array();
+        return [];
     }
 
     /**

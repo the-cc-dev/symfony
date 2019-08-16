@@ -11,14 +11,15 @@
 
 namespace Symfony\Component\Security\Core\Authentication\Provider;
 
+use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
 use Symfony\Component\Security\Core\Encoder\EncoderFactoryInterface;
-use Symfony\Component\Security\Core\User\UserProviderInterface;
-use Symfony\Component\Security\Core\User\UserCheckerInterface;
-use Symfony\Component\Security\Core\User\UserInterface;
-use Symfony\Component\Security\Core\Exception\UsernameNotFoundException;
 use Symfony\Component\Security\Core\Exception\AuthenticationServiceException;
 use Symfony\Component\Security\Core\Exception\BadCredentialsException;
-use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
+use Symfony\Component\Security\Core\Exception\UsernameNotFoundException;
+use Symfony\Component\Security\Core\User\PasswordUpgraderInterface;
+use Symfony\Component\Security\Core\User\UserCheckerInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Security\Core\User\UserProviderInterface;
 
 /**
  * DaoAuthenticationProvider uses a UserProviderInterface to retrieve the user
@@ -54,8 +55,14 @@ class DaoAuthenticationProvider extends UserAuthenticationProvider
                 throw new BadCredentialsException('The presented password cannot be empty.');
             }
 
-            if (!$this->encoderFactory->getEncoder($user)->isPasswordValid($user->getPassword(), $presentedPassword, $user->getSalt())) {
+            $encoder = $this->encoderFactory->getEncoder($user);
+
+            if (!$encoder->isPasswordValid($user->getPassword(), $presentedPassword, $user->getSalt())) {
                 throw new BadCredentialsException('The presented password is invalid.');
+            }
+
+            if ($this->userProvider instanceof PasswordUpgraderInterface && method_exists($encoder, 'needsRehash') && $encoder->needsRehash($user->getPassword())) {
+                $this->userProvider->upgradePassword($user, $encoder->encodePassword($presentedPassword, $user->getSalt()));
             }
         }
     }
@@ -63,7 +70,7 @@ class DaoAuthenticationProvider extends UserAuthenticationProvider
     /**
      * {@inheritdoc}
      */
-    protected function retrieveUser($username, UsernamePasswordToken $token)
+    protected function retrieveUser(string $username, UsernamePasswordToken $token)
     {
         $user = $token->getUser();
         if ($user instanceof UserInterface) {

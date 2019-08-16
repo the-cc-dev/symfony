@@ -23,21 +23,21 @@ class ClassDiscriminatorMappingTest extends TestCase
 {
     public function testGetClass()
     {
-        $mapping = new ClassDiscriminatorMapping('type', array(
+        $mapping = new ClassDiscriminatorMapping('type', [
             'first' => AbstractDummyFirstChild::class,
-        ));
+        ]);
 
         $this->assertEquals(AbstractDummyFirstChild::class, $mapping->getClassForType('first'));
-        $this->assertEquals(null, $mapping->getClassForType('second'));
+        $this->assertNull($mapping->getClassForType('second'));
     }
 
     public function testMappedObjectType()
     {
-        $mapping = new ClassDiscriminatorMapping('type', array(
+        $mapping = new ClassDiscriminatorMapping('type', [
             'first' => AbstractDummyFirstChild::class,
-        ));
+        ]);
 
         $this->assertEquals('first', $mapping->getMappedObjectType(new AbstractDummyFirstChild()));
-        $this->assertEquals(null, $mapping->getMappedObjectType(new AbstractDummySecondChild()));
+        $this->assertNull($mapping->getMappedObjectType(new AbstractDummySecondChild()));
     }
 }

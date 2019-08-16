@@ -32,7 +32,7 @@ class JsonBundleWriterTest extends TestCase
      */
     private $filesystem;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->writer = new JsonBundleWriter();
         $this->directory = sys_get_temp_dir().'/JsonBundleWriterTest/'.mt_rand(1000, 9999);
@@ -41,25 +41,25 @@ class JsonBundleWriterTest extends TestCase
         $this->filesystem->mkdir($this->directory);
     }
 
-    protected function tearDown()
+    protected function tearDown(): void
     {
         $this->filesystem->remove($this->directory);
     }
 
     public function testWrite()
     {
-        $this->writer->write($this->directory, 'en', array(
-            'Entry1' => array(
-                'Array' => array('foo', 'bar'),
+        $this->writer->write($this->directory, 'en', [
+            'Entry1' => [
+                'Array' => ['foo', 'bar'],
                 'Integer' => 5,
                 'Boolean' => false,
                 'Float' => 1.23,
-            ),
+            ],
             'Entry2' => 'String',
-            'Traversable' => new \ArrayIterator(array(
+            'Traversable' => new \ArrayIterator([
                 'Foo' => 'Bar',
-            )),
-        ));
+            ]),
+        ]);
 
         $this->assertFileEquals(__DIR__.'/Fixtures/en.json', $this->directory.'/en.json');
     }

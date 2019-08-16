@@ -33,14 +33,14 @@ class EncoderFactory implements EncoderFactoryInterface
         $encoderKey = null;
 
         if ($user instanceof EncoderAwareInterface && (null !== $encoderName = $user->getEncoderName())) {
-            if (!array_key_exists($encoderName, $this->encoders)) {
+            if (!\array_key_exists($encoderName, $this->encoders)) {
                 throw new \RuntimeException(sprintf('The encoder "%s" was not configured.', $encoderName));
             }
 
             $encoderKey = $encoderName;
         } else {
             foreach ($this->encoders as $class => $encoder) {
-                if ((is_object($user) && $user instanceof $class) || (!is_object($user) && (is_subclass_of($user, $class) || $user == $class))) {
+                if ((\is_object($user) && $user instanceof $class) || (!\is_object($user) && (is_subclass_of($user, $class) || $user == $class))) {
                     $encoderKey = $class;
                     break;
                 }
@@ -48,7 +48,7 @@ class EncoderFactory implements EncoderFactoryInterface
         }
 
         if (null === $encoderKey) {
-            throw new \RuntimeException(sprintf('No encoder has been configured for account "%s".', is_object($user) ? get_class($user) : $user));
+            throw new \RuntimeException(sprintf('No encoder has been configured for account "%s".', \is_object($user) ? \get_class($user) : $user));
         }
 
         if (!$this->encoders[$encoderKey] instanceof PasswordEncoderInterface) {
@@ -61,11 +61,9 @@ class EncoderFactory implements EncoderFactoryInterface
     /**
      * Creates the actual encoder instance.
      *
-     * @return PasswordEncoderInterface
-     *
      * @throws \InvalidArgumentException
      */
-    private function createEncoder(array $config)
+    private function createEncoder(array $config): PasswordEncoderInterface
     {
         if (isset($config['algorithm'])) {
             $config = $this->getEncoderConfigFromAlgorithm($config);
@@ -82,50 +80,67 @@ class EncoderFactory implements EncoderFactoryInterface
         return $reflection->newInstanceArgs($config['arguments']);
     }
 
-    private function getEncoderConfigFromAlgorithm($config)
+    private function getEncoderConfigFromAlgorithm(array $config)
     {
+        if ('auto' === $config['algorithm']) {
+            $encoderChain = [];
+            // "plaintext" is not listed as any leaked hashes could then be used to authenticate directly
+            foreach ([SodiumPasswordEncoder::isSupported() ? 'sodium' : 'native', 'pbkdf2', $config['hash_algorithm']] as $algo) {
+                $config['algorithm'] = $algo;
+                $encoderChain[] = $this->createEncoder($config);
+            }
+
+            return [
+                'class' => MigratingPasswordEncoder::class,
+                'arguments' => $encoderChain,
+            ];
+        }
+
         switch ($config['algorithm']) {
             case 'plaintext':
-                return array(
+                return [
                     'class' => PlaintextPasswordEncoder::class,
-                    'arguments' => array($config['ignore_case']),
-                );
+                    'arguments' => [$config['ignore_case']],
+                ];
 
             case 'pbkdf2':
-                return array(
+                return [
                     'class' => Pbkdf2PasswordEncoder::class,
-                    'arguments' => array(
+                    'arguments' => [
                         $config['hash_algorithm'],
                         $config['encode_as_base64'],
                         $config['iterations'],
                         $config['key_length'],
-                    ),
-                );
+                    ],
+                ];
 
-            case 'bcrypt':
-                return array(
-                    'class' => BCryptPasswordEncoder::class,
-                    'arguments' => array($config['cost']),
-                );
+            case 'native':
+                return [
+                    'class' => NativePasswordEncoder::class,
+                    'arguments' => [
+                        $config['time_cost'] ?? null,
+                        (($config['memory_cost'] ?? 0) << 10) ?: null,
+                        $config['cost'] ?? null,
+                    ],
+                ];
 
-            case 'argon2i':
-                return array(
-                    'class' => Argon2iPasswordEncoder::class,
-                    'arguments' => array(
-                        $config['memory_cost'],
-                        $config['time_cost'],
-                        $config['threads'],
-                    ),
-                );
+            case 'sodium':
+                return [
+                    'class' => SodiumPasswordEncoder::class,
+                    'arguments' => [
+                        $config['time_cost'] ?? null,
+                        (($config['memory_cost'] ?? 0) << 10) ?: null,
+                    ],
+                ];
         }
 
-        return array(
+        return [
             'class' => MessageDigestPasswordEncoder::class,
-            'arguments' => array(
+            'arguments' => [
                 $config['algorithm'],
                 $config['encode_as_base64'],
                 $config['iterations'],
-            ),
-        );
+            ],
+        ];
     }
 }

@@ -11,13 +11,15 @@
 
 namespace Symfony\Component\Lock\Tests\Store;
 
+use PHPUnit\Framework\MockObject\MockObject;
+use Symfony\Component\Lock\BlockingStoreInterface;
 use Symfony\Component\Lock\Exception\LockConflictedException;
 use Symfony\Component\Lock\Key;
-use Symfony\Component\Lock\Strategy\UnanimousStrategy;
-use Symfony\Component\Lock\Strategy\StrategyInterface;
+use Symfony\Component\Lock\PersistingStoreInterface;
 use Symfony\Component\Lock\Store\CombinedStore;
 use Symfony\Component\Lock\Store\RedisStore;
-use Symfony\Component\Lock\StoreInterface;
+use Symfony\Component\Lock\Strategy\StrategyInterface;
+use Symfony\Component\Lock\Strategy\UnanimousStrategy;
 
 /**
  * @author Jérémy Derussé <jeremy@derusse.com>
@@ -46,32 +48,30 @@ class CombinedStoreTest extends AbstractStoreTest
             self::markTestSkipped($e->getMessage());
         }
 
-        return new CombinedStore(array(new RedisStore($redis)), new UnanimousStrategy());
+        return new CombinedStore([new RedisStore($redis)], new UnanimousStrategy());
     }
 
-    /** @var \PHPUnit_Framework_MockObject_MockObject */
+    /** @var MockObject */
     private $strategy;
-    /** @var \PHPUnit_Framework_MockObject_MockObject */
+    /** @var MockObject */
     private $store1;
-    /** @var \PHPUnit_Framework_MockObject_MockObject */
+    /** @var MockObject */
     private $store2;
     /** @var CombinedStore */
     private $store;
 
-    public function setup()
+    protected function setUp(): void
     {
         $this->strategy = $this->getMockBuilder(StrategyInterface::class)->getMock();
-        $this->store1 = $this->getMockBuilder(StoreInterface::class)->getMock();
-        $this->store2 = $this->getMockBuilder(StoreInterface::class)->getMock();
+        $this->store1 = $this->createMock(BlockingStoreInterface::class);
+        $this->store2 = $this->createMock(BlockingStoreInterface::class);
 
-        $this->store = new CombinedStore(array($this->store1, $this->store2), $this->strategy);
+        $this->store = new CombinedStore([$this->store1, $this->store2], $this->strategy);
     }
 
-    /**
-     * @expectedException \Symfony\Component\Lock\Exception\LockConflictedException
-     */
     public function testSaveThrowsExceptionOnFailure()
     {
+        $this->expectException('Symfony\Component\Lock\Exception\LockConflictedException');
         $key = new Key(uniqid(__METHOD__, true));
 
         $this->store1
@@ -164,11 +164,9 @@ class CombinedStoreTest extends AbstractStoreTest
         }
     }
 
-    /**
-     * @expectedException \Symfony\Component\Lock\Exception\LockConflictedException
-     */
     public function testputOffExpirationThrowsExceptionOnFailure()
     {
+        $this->expectException('Symfony\Component\Lock\Exception\LockConflictedException');
         $key = new Key(uniqid(__METHOD__, true));
         $ttl = random_int(1, 10);
 
@@ -266,10 +264,10 @@ class CombinedStoreTest extends AbstractStoreTest
 
     public function testPutOffExpirationIgnoreNonExpiringStorage()
     {
-        $store1 = $this->getMockBuilder(StoreInterface::class)->getMock();
-        $store2 = $this->getMockBuilder(StoreInterface::class)->getMock();
+        $store1 = $this->getMockBuilder(PersistingStoreInterface::class)->getMock();
+        $store2 = $this->getMockBuilder(PersistingStoreInterface::class)->getMock();
 
-        $store = new CombinedStore(array($store1, $store2), $this->strategy);
+        $store = new CombinedStore([$store1, $store2], $this->strategy);
 
         $key = new Key(uniqid(__METHOD__, true));
         $ttl = random_int(1, 10);

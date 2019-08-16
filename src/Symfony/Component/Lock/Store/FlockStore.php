@@ -11,14 +11,14 @@
 
 namespace Symfony\Component\Lock\Store;
 
+use Symfony\Component\Lock\BlockingStoreInterface;
 use Symfony\Component\Lock\Exception\InvalidArgumentException;
 use Symfony\Component\Lock\Exception\LockConflictedException;
 use Symfony\Component\Lock\Exception\LockStorageException;
 use Symfony\Component\Lock\Key;
-use Symfony\Component\Lock\StoreInterface;
 
 /**
- * FlockStore is a StoreInterface implementation using the FileSystem flock.
+ * FlockStore is a PersistingStoreInterface implementation using the FileSystem flock.
  *
  * Original implementation in \Symfony\Component\Filesystem\LockHandler.
  *
@@ -27,7 +27,7 @@ use Symfony\Component\Lock\StoreInterface;
  * @author Romain Neutron <imprec@gmail.com>
  * @author Nicolas Grekas <p@tchwork.com>
  */
-class FlockStore implements StoreInterface
+class FlockStore implements BlockingStoreInterface
 {
     private $lockPath;
 
@@ -64,7 +64,7 @@ class FlockStore implements StoreInterface
         $this->lock($key, true);
     }
 
-    private function lock(Key $key, $blocking)
+    private function lock(Key $key, bool $blocking)
     {
         // The lock is maybe already acquired.
         if ($key->hasState(__CLASS__)) {
@@ -78,21 +78,19 @@ class FlockStore implements StoreInterface
         );
 
         // Silence error reporting
-        set_error_handler(function () {
-        });
-        if (!$handle = fopen($fileName, 'r')) {
+        set_error_handler(function ($type, $msg) use (&$error) { $error = $msg; });
+        if (!$handle = fopen($fileName, 'r+') ?: fopen($fileName, 'r')) {
             if ($handle = fopen($fileName, 'x')) {
-                chmod($fileName, 0444);
-            } elseif (!$handle = fopen($fileName, 'r')) {
+                chmod($fileName, 0666);
+            } elseif (!$handle = fopen($fileName, 'r+') ?: fopen($fileName, 'r')) {
                 usleep(100); // Give some time for chmod() to complete
-                $handle = fopen($fileName, 'r');
+                $handle = fopen($fileName, 'r+') ?: fopen($fileName, 'r');
             }
         }
         restore_error_handler();
 
         if (!$handle) {
-            $error = error_get_last();
-            throw new LockStorageException($error['message'], 0, null);
+            throw new LockStorageException($error, 0, null);
         }
 
         // On Windows, even if PHP doc says the contrary, LOCK_NB works, see
@@ -108,7 +106,7 @@ class FlockStore implements StoreInterface
     /**
      * {@inheritdoc}
      */
-    public function putOffExpiration(Key $key, $ttl)
+    public function putOffExpiration(Key $key, float $ttl)
     {
         // do nothing, the flock locks forever.
     }

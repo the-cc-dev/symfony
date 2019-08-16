@@ -18,7 +18,7 @@ use Symfony\Component\Security\Csrf\Exception\TokenNotFoundException;
  *
  * @author Bernhard Schussek <bschussek@gmail.com>
  */
-class NativeSessionTokenStorage implements TokenStorageInterface
+class NativeSessionTokenStorage implements ClearableTokenStorageInterface
 {
     /**
      * The namespace used to store values in the session.
@@ -41,7 +41,7 @@ class NativeSessionTokenStorage implements TokenStorageInterface
     /**
      * {@inheritdoc}
      */
-    public function getToken($tokenId)
+    public function getToken(string $tokenId)
     {
         if (!$this->sessionStarted) {
             $this->startSession();
@@ -57,19 +57,19 @@ class NativeSessionTokenStorage implements TokenStorageInterface
     /**
      * {@inheritdoc}
      */
-    public function setToken($tokenId, $token)
+    public function setToken(string $tokenId, string $token)
     {
         if (!$this->sessionStarted) {
             $this->startSession();
         }
 
-        $_SESSION[$this->namespace][$tokenId] = (string) $token;
+        $_SESSION[$this->namespace][$tokenId] = $token;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function hasToken($tokenId)
+    public function hasToken(string $tokenId)
     {
         if (!$this->sessionStarted) {
             $this->startSession();
@@ -81,14 +81,14 @@ class NativeSessionTokenStorage implements TokenStorageInterface
     /**
      * {@inheritdoc}
      */
-    public function removeToken($tokenId)
+    public function removeToken(string $tokenId)
     {
         if (!$this->sessionStarted) {
             $this->startSession();
         }
 
         if (!isset($_SESSION[$this->namespace][$tokenId])) {
-            return;
+            return null;
         }
 
         $token = (string) $_SESSION[$this->namespace][$tokenId];
@@ -100,6 +100,14 @@ class NativeSessionTokenStorage implements TokenStorageInterface
         }
 
         return $token;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function clear()
+    {
+        unset($_SESSION[$this->namespace]);
     }
 
     private function startSession()

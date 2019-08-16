@@ -26,8 +26,8 @@ class JsonLoginFactory extends AbstractFactory
     {
         $this->addOption('username_path', 'username');
         $this->addOption('password_path', 'password');
-        $this->defaultFailureHandlerOptions = array();
-        $this->defaultSuccessHandlerOptions = array();
+        $this->defaultFailureHandlerOptions = [];
+        $this->defaultSuccessHandlerOptions = [];
     }
 
     /**
@@ -49,7 +49,7 @@ class JsonLoginFactory extends AbstractFactory
     /**
      * {@inheritdoc}
      */
-    protected function createAuthProvider(ContainerBuilder $container, $id, $config, $userProviderId)
+    protected function createAuthProvider(ContainerBuilder $container, string $id, array $config, string $userProviderId)
     {
         $provider = 'security.authentication.provider.dao.'.$id;
         $container
@@ -81,7 +81,7 @@ class JsonLoginFactory extends AbstractFactory
     /**
      * {@inheritdoc}
      */
-    protected function createListener($container, $id, $config, $userProvider)
+    protected function createListener(ContainerBuilder $container, string $id, array $config, string $userProvider)
     {
         $listenerId = $this->getListenerId();
         $listener = new ChildDefinition($listenerId);
@@ -89,6 +89,7 @@ class JsonLoginFactory extends AbstractFactory
         $listener->replaceArgument(4, isset($config['success_handler']) ? new Reference($this->createAuthenticationSuccessHandler($container, $id, $config)) : null);
         $listener->replaceArgument(5, isset($config['failure_handler']) ? new Reference($this->createAuthenticationFailureHandler($container, $id, $config)) : null);
         $listener->replaceArgument(6, array_intersect_key($config, $this->options));
+        $listener->addMethodCall('setSessionAuthenticationStrategy', [new Reference('security.authentication.session_strategy.'.$id)]);
 
         $listenerId .= '.'.$id;
         $container->setDefinition($listenerId, $listener);

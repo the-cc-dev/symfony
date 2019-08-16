@@ -11,6 +11,7 @@
 
 namespace Symfony\Bundle\FrameworkBundle\Tests\Command;
 
+use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Cache\CacheItemPoolInterface;
 use Symfony\Bundle\FrameworkBundle\Command\CachePoolDeleteCommand;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
@@ -23,7 +24,7 @@ class CachePoolDeleteCommandTest extends TestCase
 {
     private $cachePool;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->cachePool = $this->getMockBuilder(CacheItemPoolInterface::class)
             ->getMock();
@@ -42,9 +43,9 @@ class CachePoolDeleteCommandTest extends TestCase
             ->willReturn(true);
 
         $tester = $this->getCommandTester($this->getKernel());
-        $tester->execute(array('pool' => 'foo', 'key' => 'bar'));
+        $tester->execute(['pool' => 'foo', 'key' => 'bar']);
 
-        $this->assertContains('[OK] Cache item "bar" was successfully deleted.', $tester->getDisplay());
+        $this->assertStringContainsString('[OK] Cache item "bar" was successfully deleted.', $tester->getDisplay());
     }
 
     public function testCommandWithInValidKey()
@@ -59,9 +60,9 @@ class CachePoolDeleteCommandTest extends TestCase
             ->with('bar');
 
         $tester = $this->getCommandTester($this->getKernel());
-        $tester->execute(array('pool' => 'foo', 'key' => 'bar'));
+        $tester->execute(['pool' => 'foo', 'key' => 'bar']);
 
-        $this->assertContains('[NOTE] Cache item "bar" does not exist in cache pool "foo".', $tester->getDisplay());
+        $this->assertStringContainsString('[NOTE] Cache item "bar" does not exist in cache pool "foo".', $tester->getDisplay());
     }
 
     public function testCommandDeleteFailed()
@@ -76,18 +77,14 @@ class CachePoolDeleteCommandTest extends TestCase
             ->with('bar')
             ->willReturn(false);
 
-        if (method_exists($this, 'expectExceptionMessage')) {
-            $this->expectExceptionMessage('Cache item "bar" could not be deleted.');
-        } else {
-            $this->setExpectedException('Exception', 'Cache item "bar" could not be deleted.');
-        }
+        $this->expectExceptionMessage('Cache item "bar" could not be deleted.');
 
         $tester = $this->getCommandTester($this->getKernel());
-        $tester->execute(array('pool' => 'foo', 'key' => 'bar'));
+        $tester->execute(['pool' => 'foo', 'key' => 'bar']);
     }
 
     /**
-     * @return \PHPUnit_Framework_MockObject_MockObject|KernelInterface
+     * @return MockObject|KernelInterface
      */
     private function getKernel()
     {
@@ -107,7 +104,7 @@ class CachePoolDeleteCommandTest extends TestCase
         $kernel
             ->expects($this->once())
             ->method('getBundles')
-            ->willReturn(array());
+            ->willReturn([]);
 
         return $kernel;
     }
@@ -115,7 +112,7 @@ class CachePoolDeleteCommandTest extends TestCase
     private function getCommandTester(KernelInterface $kernel): CommandTester
     {
         $application = new Application($kernel);
-        $application->add(new CachePoolDeleteCommand(new Psr6CacheClearer(array('foo' => $this->cachePool))));
+        $application->add(new CachePoolDeleteCommand(new Psr6CacheClearer(['foo' => $this->cachePool])));
 
         return new CommandTester($application->find('cache:pool:delete'));
     }

@@ -11,12 +11,12 @@
 
 namespace Symfony\Component\Form\Extension\Validator\ViolationMapper;
 
+use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\Form\Util\InheritDataAwareIterator;
-use Symfony\Component\PropertyAccess\PropertyPathIterator;
 use Symfony\Component\PropertyAccess\PropertyPathBuilder;
+use Symfony\Component\PropertyAccess\PropertyPathIterator;
 use Symfony\Component\PropertyAccess\PropertyPathIteratorInterface;
-use Symfony\Component\Form\FormError;
 use Symfony\Component\Validator\ConstraintViolation;
 
 /**
@@ -32,7 +32,7 @@ class ViolationMapper implements ViolationMapperInterface
     /**
      * {@inheritdoc}
      */
-    public function mapViolation(ConstraintViolation $violation, FormInterface $form, $allowNonSynchronized = false)
+    public function mapViolation(ConstraintViolation $violation, FormInterface $form, bool $allowNonSynchronized = false)
     {
         $this->allowNonSynchronized = $allowNonSynchronized;
 
@@ -48,7 +48,7 @@ class ViolationMapper implements ViolationMapperInterface
         $match = false;
 
         // Don't create a ViolationPath instance for empty property paths
-        if (strlen($violation->getPropertyPath()) > 0) {
+        if (\strlen($violation->getPropertyPath()) > 0) {
             $violationPath = new ViolationPath($violation->getPropertyPath());
             $relativePath = $this->reconstructPath($violationPath, $form);
         }
@@ -140,20 +140,15 @@ class ViolationMapper implements ViolationMapperInterface
      *
      * If a matching child is found, it is returned. Otherwise
      * null is returned.
-     *
-     * @param FormInterface                 $form The form to search
-     * @param PropertyPathIteratorInterface $it   The iterator at its current position
-     *
-     * @return null|FormInterface The found match or null
      */
-    private function matchChild(FormInterface $form, PropertyPathIteratorInterface $it)
+    private function matchChild(FormInterface $form, PropertyPathIteratorInterface $it): ?FormInterface
     {
         $target = null;
         $chunk = '';
         $foundAtIndex = null;
 
         // Construct mapping rules for the given form
-        $rules = array();
+        $rules = [];
 
         foreach ($form->getConfig()->getOption('error_mapping') as $propertyPath => $targetPath) {
             // Dot rules are considered at the very end
@@ -211,13 +206,8 @@ class ViolationMapper implements ViolationMapperInterface
 
     /**
      * Reconstructs a property path from a violation path and a form tree.
-     *
-     * @param ViolationPath $violationPath The violation path
-     * @param FormInterface $origin        The root form of the tree
-     *
-     * @return RelativePath The reconstructed path
      */
-    private function reconstructPath(ViolationPath $violationPath, FormInterface $origin)
+    private function reconstructPath(ViolationPath $violationPath, FormInterface $origin): ?RelativePath
     {
         $propertyPathBuilder = new PropertyPathBuilder($violationPath);
         $it = $violationPath->getIterator();
@@ -268,14 +258,8 @@ class ViolationMapper implements ViolationMapperInterface
         return null !== $finalPath ? new RelativePath($origin, $finalPath) : null;
     }
 
-    /**
-     * @return bool
-     */
-    private function acceptsErrors(FormInterface $form)
+    private function acceptsErrors(FormInterface $form): bool
     {
-        // Ignore non-submitted forms. This happens, for example, in PATCH
-        // requests.
-        // https://github.com/symfony/symfony/pull/10567
-        return $form->isSubmitted() && ($this->allowNonSynchronized || $form->isSynchronized());
+        return $this->allowNonSynchronized || $form->isSynchronized();
     }
 }

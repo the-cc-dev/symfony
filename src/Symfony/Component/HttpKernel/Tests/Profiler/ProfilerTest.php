@@ -12,12 +12,12 @@
 namespace Symfony\Component\HttpKernel\Tests\Profiler;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\DataCollector\DataCollectorInterface;
 use Symfony\Component\HttpKernel\DataCollector\RequestDataCollector;
 use Symfony\Component\HttpKernel\Profiler\FileProfilerStorage;
 use Symfony\Component\HttpKernel\Profiler\Profiler;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 
 class ProfilerTest extends TestCase
 {
@@ -28,6 +28,7 @@ class ProfilerTest extends TestCase
     {
         $request = new Request();
         $request->query->set('foo', 'bar');
+        $request->server->set('REMOTE_ADDR', '127.0.0.1');
         $response = new Response('', 204);
         $collector = new RequestDataCollector();
 
@@ -82,9 +83,9 @@ class ProfilerTest extends TestCase
         $this->assertCount(0, $profiler->find(null, null, null, null, null, null, '204'));
     }
 
-    protected function setUp()
+    protected function setUp(): void
     {
-        $this->tmp = tempnam(sys_get_temp_dir(), 'sf2_profiler');
+        $this->tmp = tempnam(sys_get_temp_dir(), 'sf_profiler');
         if (file_exists($this->tmp)) {
             @unlink($this->tmp);
         }
@@ -93,7 +94,7 @@ class ProfilerTest extends TestCase
         $this->storage->purge();
     }
 
-    protected function tearDown()
+    protected function tearDown(): void
     {
         if (null !== $this->storage) {
             $this->storage->purge();

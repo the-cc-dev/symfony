@@ -11,10 +11,11 @@
 
 namespace Symfony\Component\Cache\Tests\Adapter;
 
+use PHPUnit\Framework\MockObject\MockObject;
 use Symfony\Component\Cache\Adapter\AdapterInterface;
-use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Cache\Adapter\ChainAdapter;
+use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\Cache\PruneableInterface;
 use Symfony\Component\Cache\Tests\Fixtures\ExternalAdapter;
 
@@ -24,27 +25,27 @@ use Symfony\Component\Cache\Tests\Fixtures\ExternalAdapter;
  */
 class ChainAdapterTest extends AdapterTestCase
 {
-    public function createCachePool($defaultLifetime = 0)
+    public function createCachePool($defaultLifetime = 0, $testMethod = null)
     {
-        return new ChainAdapter(array(new ArrayAdapter($defaultLifetime), new ExternalAdapter(), new FilesystemAdapter('', $defaultLifetime)), $defaultLifetime);
+        if ('testGetMetadata' === $testMethod) {
+            return new ChainAdapter([new FilesystemAdapter('', $defaultLifetime)], $defaultLifetime);
+        }
+
+        return new ChainAdapter([new ArrayAdapter($defaultLifetime), new ExternalAdapter(), new FilesystemAdapter('', $defaultLifetime)], $defaultLifetime);
     }
 
-    /**
-     * @expectedException \Symfony\Component\Cache\Exception\InvalidArgumentException
-     * @expectedExceptionMessage At least one adapter must be specified.
-     */
     public function testEmptyAdaptersException()
     {
-        new ChainAdapter(array());
+        $this->expectException('Symfony\Component\Cache\Exception\InvalidArgumentException');
+        $this->expectExceptionMessage('At least one adapter must be specified.');
+        new ChainAdapter([]);
     }
 
-    /**
-     * @expectedException \Symfony\Component\Cache\Exception\InvalidArgumentException
-     * @expectedExceptionMessage The class "stdClass" does not implement
-     */
     public function testInvalidAdapterException()
     {
-        new ChainAdapter(array(new \stdClass()));
+        $this->expectException('Symfony\Component\Cache\Exception\InvalidArgumentException');
+        $this->expectExceptionMessage('The class "stdClass" does not implement');
+        new ChainAdapter([new \stdClass()]);
     }
 
     public function testPrune()
@@ -53,23 +54,23 @@ class ChainAdapterTest extends AdapterTestCase
             $this->markTestSkipped($this->skippedTests[__FUNCTION__]);
         }
 
-        $cache = new ChainAdapter(array(
+        $cache = new ChainAdapter([
             $this->getPruneableMock(),
             $this->getNonPruneableMock(),
             $this->getPruneableMock(),
-        ));
+        ]);
         $this->assertTrue($cache->prune());
 
-        $cache = new ChainAdapter(array(
+        $cache = new ChainAdapter([
             $this->getPruneableMock(),
             $this->getFailingPruneableMock(),
             $this->getPruneableMock(),
-        ));
+        ]);
         $this->assertFalse($cache->prune());
     }
 
     /**
-     * @return \PHPUnit_Framework_MockObject_MockObject|PruneableCacheInterface
+     * @return MockObject|PruneableCacheInterface
      */
     private function getPruneableMock()
     {
@@ -80,13 +81,13 @@ class ChainAdapterTest extends AdapterTestCase
         $pruneable
             ->expects($this->atLeastOnce())
             ->method('prune')
-            ->will($this->returnValue(true));
+            ->willReturn(true);
 
         return $pruneable;
     }
 
     /**
-     * @return \PHPUnit_Framework_MockObject_MockObject|PruneableCacheInterface
+     * @return MockObject|PruneableCacheInterface
      */
     private function getFailingPruneableMock()
     {
@@ -97,13 +98,13 @@ class ChainAdapterTest extends AdapterTestCase
         $pruneable
             ->expects($this->atLeastOnce())
             ->method('prune')
-            ->will($this->returnValue(false));
+            ->willReturn(false);
 
         return $pruneable;
     }
 
     /**
-     * @return \PHPUnit_Framework_MockObject_MockObject|AdapterInterface
+     * @return MockObject|AdapterInterface
      */
     private function getNonPruneableMock()
     {

@@ -11,8 +11,8 @@
 
 namespace Symfony\Bridge\Doctrine\DependencyInjection\Security\UserProvider;
 
-use Symfony\Component\Config\Definition\Builder\NodeDefinition;
 use Symfony\Bundle\SecurityBundle\DependencyInjection\Security\UserProvider\UserProviderFactoryInterface;
+use Symfony\Component\Config\Definition\Builder\NodeDefinition;
 use Symfony\Component\DependencyInjection\ChildDefinition;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
@@ -33,7 +33,7 @@ class EntityFactory implements UserProviderFactoryInterface
         $this->providerId = $providerId;
     }
 
-    public function create(ContainerBuilder $container, $id, $config)
+    public function create(ContainerBuilder $container, string $id, array $config)
     {
         $container
             ->setDefinition($id, new ChildDefinition($this->providerId))

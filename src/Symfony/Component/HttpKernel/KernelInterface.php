@@ -11,9 +11,9 @@
 
 namespace Symfony\Component\HttpKernel;
 
+use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpKernel\Bundle\BundleInterface;
-use Symfony\Component\Config\Loader\LoaderInterface;
 
 /**
  * The Kernel is the heart of the Symfony system.
@@ -22,7 +22,7 @@ use Symfony\Component\Config\Loader\LoaderInterface;
  *
  * @author Fabien Potencier <fabien@symfony.com>
  */
-interface KernelInterface extends HttpKernelInterface, \Serializable
+interface KernelInterface extends HttpKernelInterface
 {
     /**
      * Returns an array of bundles to register.
@@ -58,13 +58,11 @@ interface KernelInterface extends HttpKernelInterface, \Serializable
     /**
      * Returns a bundle.
      *
-     * @param string $name Bundle name
-     *
      * @return BundleInterface A BundleInterface instance
      *
      * @throws \InvalidArgumentException when the bundle is not enabled
      */
-    public function getBundle($name);
+    public function getBundle(string $name);
 
     /**
      * Returns the file path for a given bundle resource.
@@ -85,23 +83,14 @@ interface KernelInterface extends HttpKernelInterface, \Serializable
      *
      * before looking in the bundle resource folder.
      *
-     * @param string $name  A resource name to locate
-     * @param string $dir   A directory where to look for the resource first
-     * @param bool   $first Whether to return the first path or paths for all matching bundles
+     * @param bool $first Whether to return the first path or paths for all matching bundles
      *
      * @return string|array The absolute path of the resource or an array if $first is false
      *
      * @throws \InvalidArgumentException if the file cannot be found or the name is not valid
      * @throws \RuntimeException         if the name contains invalid/unsafe characters
      */
-    public function locateResource($name, $dir = null, $first = true);
-
-    /**
-     * Gets the name of the kernel.
-     *
-     * @return string The kernel name
-     */
-    public function getName();
+    public function locateResource(string $name, string $dir = null, bool $first = true);
 
     /**
      * Gets the environment.
@@ -118,16 +107,16 @@ interface KernelInterface extends HttpKernelInterface, \Serializable
     public function isDebug();
 
     /**
-     * Gets the application root dir (path of the project's Kernel class).
+     * Gets the project dir (path of the project's composer file).
      *
-     * @return string The Kernel root dir
+     * @return string
      */
-    public function getRootDir();
+    public function getProjectDir();
 
     /**
      * Gets the current container.
      *
-     * @return ContainerInterface A ContainerInterface instance
+     * @return ContainerInterface|null A ContainerInterface instance or null when the Kernel is shutdown
      */
     public function getContainer();
 

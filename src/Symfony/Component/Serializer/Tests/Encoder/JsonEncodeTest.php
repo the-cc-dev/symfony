@@ -19,7 +19,7 @@ class JsonEncodeTest extends TestCase
 {
     private $encode;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->encode = new JsonEncode();
     }
@@ -43,17 +43,17 @@ class JsonEncodeTest extends TestCase
 
     public function encodeProvider()
     {
-        return array(
-            array(array(), '[]', array()),
-            array(array(), '{}', array('json_encode_options' => JSON_FORCE_OBJECT)),
-        );
+        return [
+            [[], '[]', []],
+            [[], '{}', ['json_encode_options' => JSON_FORCE_OBJECT]],
+            [new \ArrayObject(), '{}', []],
+            [new \ArrayObject(['foo' => 'bar']), '{"foo":"bar"}', []],
+        ];
     }
 
-    /**
-     * @expectedException \Symfony\Component\Serializer\Exception\UnexpectedValueException
-     */
     public function testEncodeWithError()
     {
+        $this->expectException('Symfony\Component\Serializer\Exception\UnexpectedValueException');
         $this->encode->encode("\xB1\x31", JsonEncoder::FORMAT);
     }
 }

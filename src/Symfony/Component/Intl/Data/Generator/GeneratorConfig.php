@@ -28,7 +28,7 @@ class GeneratorConfig
     /**
      * @var BundleWriterInterface[]
      */
-    private $bundleWriters = array();
+    private $bundleWriters = [];
 
     public function __construct(string $sourceDir, string $icuVersion)
     {
@@ -38,11 +38,8 @@ class GeneratorConfig
 
     /**
      * Adds a writer to be used during the data conversion.
-     *
-     * @param string                $targetDir The output directory
-     * @param BundleWriterInterface $writer    The writer instance
      */
-    public function addBundleWriter($targetDir, BundleWriterInterface $writer)
+    public function addBundleWriter(string $targetDir, BundleWriterInterface $writer)
     {
         $this->bundleWriters[$targetDir] = $writer;
     }

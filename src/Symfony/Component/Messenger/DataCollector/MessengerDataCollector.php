@@ -16,15 +16,14 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\DataCollector\DataCollector;
 use Symfony\Component\HttpKernel\DataCollector\LateDataCollectorInterface;
 use Symfony\Component\Messenger\TraceableMessageBus;
+use Symfony\Component\VarDumper\Caster\ClassStub;
 
 /**
  * @author Samuel Roze <samuel.roze@gmail.com>
- *
- * @experimental in 4.1
  */
 class MessengerDataCollector extends DataCollector implements LateDataCollectorInterface
 {
-    private $traceableBuses = array();
+    private $traceableBuses = [];
 
     public function registerBus(string $name, TraceableMessageBus $bus)
     {
@@ -44,13 +43,21 @@ class MessengerDataCollector extends DataCollector implements LateDataCollectorI
      */
     public function lateCollect()
     {
-        $this->data = array('messages' => array());
+        $this->data = ['messages' => [], 'buses' => array_keys($this->traceableBuses)];
 
+        $messages = [];
         foreach ($this->traceableBuses as $busName => $bus) {
             foreach ($bus->getDispatchedMessages() as $message) {
-                $this->data['messages'][] = $this->collectMessage($busName, $message);
+                $debugRepresentation = $this->cloneVar($this->collectMessage($busName, $message));
+                $messages[] = [$debugRepresentation, $message['callTime']];
             }
         }
+
+        // Order by call time
+        usort($messages, function ($a, $b) { return $a[1] <=> $b[1]; });
+
+        // Keep the messages clones only
+        $this->data['messages'] = array_column($messages, 0);
     }
 
     /**
@@ -66,59 +73,75 @@ class MessengerDataCollector extends DataCollector implements LateDataCollectorI
      */
     public function reset()
     {
-        $this->data = array();
+        $this->data = [];
         foreach ($this->traceableBuses as $traceableBus) {
             $traceableBus->reset();
         }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function getCasters()
+    {
+        $casters = parent::getCasters();
+
+        // Unset the default caster truncating collectors data.
+        unset($casters['*']);
+
+        return $casters;
     }
 
     private function collectMessage(string $busName, array $tracedMessage)
     {
         $message = $tracedMessage['message'];
 
-        $debugRepresentation = array(
+        $debugRepresentation = [
             'bus' => $busName,
-            'message' => array(
-                'type' => \get_class($message),
-                'object' => $this->cloneVar($message),
-            ),
-        );
-
-        if (array_key_exists('result', $tracedMessage)) {
-            $result = $tracedMessage['result'];
-
-            if (\is_object($result)) {
-                $debugRepresentation['result'] = array(
-                    'type' => \get_class($result),
-                    'object' => $this->cloneVar($result),
-                );
-            } elseif (\is_array($result)) {
-                $debugRepresentation['result'] = array(
-                    'type' => 'array',
-                    'object' => $this->cloneVar($result),
-                );
-            } else {
-                $debugRepresentation['result'] = array(
-                    'type' => \gettype($result),
-                    'value' => $result,
-                );
-            }
-        }
+            'stamps' => $tracedMessage['stamps'] ?? null,
+            'stamps_after_dispatch' => $tracedMessage['stamps_after_dispatch'] ?? null,
+            'message' => [
+                'type' => new ClassStub(\get_class($message)),
+                'value' => $message,
+            ],
+            'caller' => $tracedMessage['caller'],
+        ];
 
         if (isset($tracedMessage['exception'])) {
             $exception = $tracedMessage['exception'];
 
-            $debugRepresentation['exception'] = array(
+            $debugRepresentation['exception'] = [
                 'type' => \get_class($exception),
-                'message' => $exception->getMessage(),
-            );
+                'value' => $exception,
+            ];
         }
 
         return $debugRepresentation;
     }
 
-    public function getMessages(): array
+    public function getExceptionsCount(string $bus = null): int
     {
-        return $this->data['messages'] ?? array();
+        $count = 0;
+        foreach ($this->getMessages($bus) as $message) {
+            $count += (int) isset($message['exception']);
+        }
+
+        return $count;
+    }
+
+    public function getMessages(string $bus = null): array
+    {
+        if (null === $bus) {
+            return $this->data['messages'];
+        }
+
+        return array_filter($this->data['messages'], function ($message) use ($bus) {
+            return $bus === $message['bus'];
+        });
+    }
+
+    public function getBuses(): array
+    {
+        return $this->data['buses'];
     }
 }

@@ -11,9 +11,9 @@
 
 namespace Symfony\Bridge\Doctrine\Logger;
 
+use Doctrine\DBAL\Logging\SQLLogger;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Stopwatch\Stopwatch;
-use Doctrine\DBAL\Logging\SQLLogger;
 
 /**
  * @author Fabien Potencier <fabien@symfony.com>
@@ -34,6 +34,8 @@ class DbalLogger implements SQLLogger
 
     /**
      * {@inheritdoc}
+     *
+     * @return void
      */
     public function startQuery($sql, array $params = null, array $types = null)
     {
@@ -42,12 +44,14 @@ class DbalLogger implements SQLLogger
         }
 
         if (null !== $this->logger) {
-            $this->log($sql, null === $params ? array() : $this->normalizeParams($params));
+            $this->log($sql, null === $params ? [] : $this->normalizeParams($params));
         }
     }
 
     /**
      * {@inheritdoc}
+     *
+     * @return void
      */
     public function stopQuery()
     {
@@ -58,11 +62,8 @@ class DbalLogger implements SQLLogger
 
     /**
      * Logs a message.
-     *
-     * @param string $message A message to log
-     * @param array  $params  The context
      */
-    protected function log($message, array $params)
+    protected function log(string $message, array $params)
     {
         $this->logger->debug($message, $params);
     }
@@ -71,12 +72,12 @@ class DbalLogger implements SQLLogger
     {
         foreach ($params as $index => $param) {
             // normalize recursively
-            if (is_array($param)) {
+            if (\is_array($param)) {
                 $params[$index] = $this->normalizeParams($param);
                 continue;
             }
 
-            if (!is_string($params[$index])) {
+            if (!\is_string($params[$index])) {
                 continue;
             }
 

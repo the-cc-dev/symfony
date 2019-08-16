@@ -14,25 +14,23 @@ namespace Symfony\Bundle\SecurityBundle\Tests\Functional;
 use Symfony\Component\Security\Core\Authorization\AccessDecisionManager;
 use Symfony\Component\Security\Core\Authorization\TraceableAccessDecisionManager;
 
-class AutowiringTypesTest extends WebTestCase
+class AutowiringTypesTest extends AbstractWebTestCase
 {
     public function testAccessDecisionManagerAutowiring()
     {
-        static::bootKernel(array('debug' => false));
-        $container = static::$kernel->getContainer();
+        static::bootKernel(['debug' => false]);
 
-        $autowiredServices = $container->get('test.autowiring_types.autowired_services');
+        $autowiredServices = static::$container->get('test.autowiring_types.autowired_services');
         $this->assertInstanceOf(AccessDecisionManager::class, $autowiredServices->getAccessDecisionManager(), 'The security.access.decision_manager service should be injected in debug mode');
 
-        static::bootKernel(array('debug' => true));
-        $container = static::$kernel->getContainer();
+        static::bootKernel(['debug' => true]);
 
-        $autowiredServices = $container->get('test.autowiring_types.autowired_services');
+        $autowiredServices = static::$container->get('test.autowiring_types.autowired_services');
         $this->assertInstanceOf(TraceableAccessDecisionManager::class, $autowiredServices->getAccessDecisionManager(), 'The debug.security.access.decision_manager service should be injected in non-debug mode');
     }
 
-    protected static function createKernel(array $options = array())
+    protected static function createKernel(array $options = [])
     {
-        return parent::createKernel(array('test_case' => 'AutowiringTypes') + $options);
+        return parent::createKernel(['test_case' => 'AutowiringTypes'] + $options);
     }
 }

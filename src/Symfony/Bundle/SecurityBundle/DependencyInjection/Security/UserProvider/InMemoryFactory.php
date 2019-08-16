@@ -24,14 +24,14 @@ use Symfony\Component\DependencyInjection\Parameter;
  */
 class InMemoryFactory implements UserProviderFactoryInterface
 {
-    public function create(ContainerBuilder $container, $id, $config)
+    public function create(ContainerBuilder $container, string $id, array $config)
     {
         $definition = $container->setDefinition($id, new ChildDefinition('security.user.provider.in_memory'));
         $defaultPassword = new Parameter('container.build_id');
-        $users = array();
+        $users = [];
 
         foreach ($config['users'] as $username => $user) {
-            $users[$username] = array('password' => null !== $user['password'] ? (string) $user['password'] : $defaultPassword, 'roles' => $user['roles']);
+            $users[$username] = ['password' => null !== $user['password'] ? (string) $user['password'] : $defaultPassword, 'roles' => $user['roles']];
         }
 
         $definition->addArgument($users);

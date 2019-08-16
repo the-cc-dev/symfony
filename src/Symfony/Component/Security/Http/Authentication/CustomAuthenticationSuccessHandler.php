@@ -11,8 +11,8 @@
 
 namespace Symfony\Component\Security\Http\Authentication;
 
-use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 
 /**
  * @author Fabien Potencier <fabien@symfony.com>
@@ -22,9 +22,8 @@ class CustomAuthenticationSuccessHandler implements AuthenticationSuccessHandler
     private $handler;
 
     /**
-     * @param AuthenticationSuccessHandlerInterface $handler     An AuthenticationSuccessHandlerInterface instance
-     * @param array                                 $options     Options for processing a successful authentication attempt
-     * @param string                                $providerKey The provider key
+     * @param array  $options     Options for processing a successful authentication attempt
+     * @param string $providerKey The provider key
      */
     public function __construct(AuthenticationSuccessHandlerInterface $handler, array $options, string $providerKey)
     {

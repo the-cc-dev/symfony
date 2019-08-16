@@ -32,7 +32,7 @@ class ClassMetadata implements ClassMetadataInterface
      *           class' serialized representation. Do not access it. Use
      *           {@link getAttributesMetadata()} instead.
      */
-    public $attributesMetadata = array();
+    public $attributesMetadata = [];
 
     /**
      * @var \ReflectionClass
@@ -50,9 +50,6 @@ class ClassMetadata implements ClassMetadataInterface
 
     /**
      * Constructs a metadata for the given class.
-     *
-     * @param string                         $class
-     * @param ClassDiscriminatorMapping|null $classDiscriminatorMapping
      */
     public function __construct(string $class, ClassDiscriminatorMapping $classDiscriminatorMapping = null)
     {
@@ -133,10 +130,10 @@ class ClassMetadata implements ClassMetadataInterface
      */
     public function __sleep()
     {
-        return array(
+        return [
             'name',
             'attributesMetadata',
             'classDiscriminatorMapping',
-        );
+        ];
     }
 }

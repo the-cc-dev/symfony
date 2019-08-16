@@ -11,13 +11,13 @@
 
 namespace Symfony\Component\Security\Core\Authorization\Voter;
 
-use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
-use Symfony\Component\Security\Core\Authentication\AuthenticationTrustResolverInterface;
-use Symfony\Component\Security\Core\Authorization\ExpressionLanguage;
-use Symfony\Component\Security\Core\Role\RoleHierarchyInterface;
-use Symfony\Component\ExpressionLanguage\ExpressionFunctionProviderInterface;
 use Symfony\Component\ExpressionLanguage\Expression;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Security\Core\Authentication\AuthenticationTrustResolverInterface;
+use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
+use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
+use Symfony\Component\Security\Core\Authorization\ExpressionLanguage;
+use Symfony\Component\Security\Core\Role\RoleHierarchyInterface;
 
 /**
  * ExpressionVoter votes based on the evaluation of an expression.
@@ -28,23 +28,15 @@ class ExpressionVoter implements VoterInterface
 {
     private $expressionLanguage;
     private $trustResolver;
+    private $authChecker;
     private $roleHierarchy;
 
-    public function __construct(ExpressionLanguage $expressionLanguage, AuthenticationTrustResolverInterface $trustResolver, RoleHierarchyInterface $roleHierarchy = null)
+    public function __construct(ExpressionLanguage $expressionLanguage, AuthenticationTrustResolverInterface $trustResolver, AuthorizationCheckerInterface $authChecker, RoleHierarchyInterface $roleHierarchy = null)
     {
         $this->expressionLanguage = $expressionLanguage;
         $this->trustResolver = $trustResolver;
+        $this->authChecker = $authChecker;
         $this->roleHierarchy = $roleHierarchy;
-    }
-
-    /**
-     * @deprecated since Symfony 4.1, register the provider directly on the injected ExpressionLanguage instance instead.
-     */
-    public function addExpressionLanguageProvider(ExpressionFunctionProviderInterface $provider)
-    {
-        @trigger_error(sprintf('The %s() method is deprecated since Symfony 4.1, register the provider directly on the injected ExpressionLanguage instance instead.', __METHOD__), E_USER_DEPRECATED);
-
-        $this->expressionLanguage->registerProvider($provider);
     }
 
     /**
@@ -74,20 +66,21 @@ class ExpressionVoter implements VoterInterface
 
     private function getVariables(TokenInterface $token, $subject)
     {
+        $roleNames = $token->getRoleNames();
+
         if (null !== $this->roleHierarchy) {
-            $roles = $this->roleHierarchy->getReachableRoles($token->getRoles());
-        } else {
-            $roles = $token->getRoles();
+            $roleNames = $this->roleHierarchy->getReachableRoleNames($roleNames);
         }
 
-        $variables = array(
+        $variables = [
             'token' => $token,
             'user' => $token->getUser(),
             'object' => $subject,
             'subject' => $subject,
-            'roles' => array_map(function ($role) { return $role->getRole(); }, $roles),
+            'role_names' => $roleNames,
             'trust_resolver' => $this->trustResolver,
-        );
+            'auth_checker' => $this->authChecker,
+        ];
 
         // this is mainly to propose a better experience when the expression is used
         // in an access control rule, as the developer does not know that it's going

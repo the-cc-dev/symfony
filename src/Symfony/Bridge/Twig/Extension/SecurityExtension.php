@@ -31,7 +31,7 @@ class SecurityExtension extends AbstractExtension
         $this->securityChecker = $securityChecker;
     }
 
-    public function isGranted($role, $object = null, $field = null)
+    public function isGranted($role, object $object = null, string $field = null)
     {
         if (null === $this->securityChecker) {
             return false;
@@ -50,12 +50,14 @@ class SecurityExtension extends AbstractExtension
 
     /**
      * {@inheritdoc}
+     *
+     * @return TwigFunction[]
      */
     public function getFunctions()
     {
-        return array(
-            new TwigFunction('is_granted', array($this, 'isGranted')),
-        );
+        return [
+            new TwigFunction('is_granted', [$this, 'isGranted']),
+        ];
     }
 
     /**

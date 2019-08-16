@@ -24,15 +24,17 @@ class ExpressionExtension extends AbstractExtension
 {
     /**
      * {@inheritdoc}
+     *
+     * @return TwigFunction[]
      */
     public function getFunctions()
     {
-        return array(
-            new TwigFunction('expression', array($this, 'createExpression')),
-        );
+        return [
+            new TwigFunction('expression', [$this, 'createExpression']),
+        ];
     }
 
-    public function createExpression($expression)
+    public function createExpression(string $expression)
     {
         return new Expression($expression);
     }

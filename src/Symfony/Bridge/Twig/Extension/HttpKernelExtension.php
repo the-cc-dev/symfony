@@ -22,16 +22,19 @@ use Twig\TwigFunction;
  */
 class HttpKernelExtension extends AbstractExtension
 {
+    /**
+     * @return TwigFunction[]
+     */
     public function getFunctions()
     {
-        return array(
-            new TwigFunction('render', array(HttpKernelRuntime::class, 'renderFragment'), array('is_safe' => array('html'))),
-            new TwigFunction('render_*', array(HttpKernelRuntime::class, 'renderFragmentStrategy'), array('is_safe' => array('html'))),
+        return [
+            new TwigFunction('render', [HttpKernelRuntime::class, 'renderFragment'], ['is_safe' => ['html']]),
+            new TwigFunction('render_*', [HttpKernelRuntime::class, 'renderFragmentStrategy'], ['is_safe' => ['html']]),
             new TwigFunction('controller', static::class.'::controller'),
-        );
+        ];
     }
 
-    public static function controller($controller, $attributes = array(), $query = array())
+    public static function controller(string $controller, array $attributes = [], array $query = [])
     {
         return new ControllerReference($controller, $attributes, $query);
     }

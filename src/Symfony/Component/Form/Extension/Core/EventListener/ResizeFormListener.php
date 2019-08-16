@@ -11,10 +11,10 @@
 
 namespace Symfony\Component\Form\Extension\Core\EventListener;
 
-use Symfony\Component\Form\FormEvents;
-use Symfony\Component\Form\FormEvent;
-use Symfony\Component\Form\Exception\UnexpectedTypeException;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Component\Form\Exception\UnexpectedTypeException;
+use Symfony\Component\Form\FormEvent;
+use Symfony\Component\Form\FormEvents;
 use Symfony\Component\Form\FormInterface;
 
 /**
@@ -32,13 +32,11 @@ class ResizeFormListener implements EventSubscriberInterface
     private $deleteEmpty;
 
     /**
-     * @param string        $type
-     * @param array         $options
      * @param bool          $allowAdd    Whether children could be added to the group
      * @param bool          $allowDelete Whether children could be removed from the group
      * @param bool|callable $deleteEmpty
      */
-    public function __construct(string $type, array $options = array(), bool $allowAdd = false, bool $allowDelete = false, $deleteEmpty = false)
+    public function __construct(string $type, array $options = [], bool $allowAdd = false, bool $allowDelete = false, $deleteEmpty = false)
     {
         $this->type = $type;
         $this->allowAdd = $allowAdd;
@@ -49,12 +47,12 @@ class ResizeFormListener implements EventSubscriberInterface
 
     public static function getSubscribedEvents()
     {
-        return array(
+        return [
             FormEvents::PRE_SET_DATA => 'preSetData',
             FormEvents::PRE_SUBMIT => 'preSubmit',
             // (MergeCollectionListener, MergeDoctrineCollectionListener)
-            FormEvents::SUBMIT => array('onSubmit', 50),
-        );
+            FormEvents::SUBMIT => ['onSubmit', 50],
+        ];
     }
 
     public function preSetData(FormEvent $event)
@@ -63,10 +61,10 @@ class ResizeFormListener implements EventSubscriberInterface
         $data = $event->getData();
 
         if (null === $data) {
-            $data = array();
+            $data = [];
         }
 
-        if (!is_array($data) && !($data instanceof \Traversable && $data instanceof \ArrayAccess)) {
+        if (!\is_array($data) && !($data instanceof \Traversable && $data instanceof \ArrayAccess)) {
             throw new UnexpectedTypeException($data, 'array or (\Traversable and \ArrayAccess)');
         }
 
@@ -77,9 +75,9 @@ class ResizeFormListener implements EventSubscriberInterface
 
         // Then add all rows again in the correct order
         foreach ($data as $name => $value) {
-            $form->add($name, $this->type, array_replace(array(
+            $form->add($name, $this->type, array_replace([
                 'property_path' => '['.$name.']',
-            ), $this->options));
+            ], $this->options));
         }
     }
 
@@ -88,8 +86,8 @@ class ResizeFormListener implements EventSubscriberInterface
         $form = $event->getForm();
         $data = $event->getData();
 
-        if (!is_array($data)) {
-            $data = array();
+        if (!\is_array($data)) {
+            $data = [];
         }
 
         // Remove all empty rows
@@ -105,9 +103,9 @@ class ResizeFormListener implements EventSubscriberInterface
         if ($this->allowAdd) {
             foreach ($data as $name => $value) {
                 if (!$form->has($name)) {
-                    $form->add($name, $this->type, array_replace(array(
+                    $form->add($name, $this->type, array_replace([
                         'property_path' => '['.$name.']',
-                    ), $this->options));
+                    ], $this->options));
                 }
             }
         }
@@ -123,10 +121,10 @@ class ResizeFormListener implements EventSubscriberInterface
         // entries, so we need to manually unset removed entries in the collection.
 
         if (null === $data) {
-            $data = array();
+            $data = [];
         }
 
-        if (!is_array($data) && !($data instanceof \Traversable && $data instanceof \ArrayAccess)) {
+        if (!\is_array($data) && !($data instanceof \Traversable && $data instanceof \ArrayAccess)) {
             throw new UnexpectedTypeException($data, 'array or (\Traversable and \ArrayAccess)');
         }
 
@@ -135,7 +133,7 @@ class ResizeFormListener implements EventSubscriberInterface
             /** @var FormInterface $child */
             foreach ($form as $name => $child) {
                 $isNew = !isset($previousData[$name]);
-                $isEmpty = is_callable($this->deleteEmpty) ? call_user_func($this->deleteEmpty, $child->getData()) : $child->isEmpty();
+                $isEmpty = \is_callable($this->deleteEmpty) ? ($this->deleteEmpty)($child->getData()) : $child->isEmpty();
 
                 // $isNew can only be true if allowAdd is true, so we don't
                 // need to check allowAdd again
@@ -149,7 +147,7 @@ class ResizeFormListener implements EventSubscriberInterface
         // The data mapper only adds, but does not remove items, so do this
         // here
         if ($this->allowDelete) {
-            $toDelete = array();
+            $toDelete = [];
 
             foreach ($data as $name => $child) {
                 if (!$form->has($name)) {

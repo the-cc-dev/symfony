@@ -12,10 +12,10 @@
 namespace Symfony\Bundle\FrameworkBundle\CacheWarmer;
 
 use Psr\Container\ContainerInterface;
-use Symfony\Component\DependencyInjection\ServiceSubscriberInterface;
 use Symfony\Component\HttpKernel\CacheWarmer\CacheWarmerInterface;
 use Symfony\Component\HttpKernel\CacheWarmer\WarmableInterface;
-use Symfony\Component\Translation\TranslatorInterface;
+use Symfony\Contracts\Service\ServiceSubscriberInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Generates the catalogues for translations.
@@ -36,7 +36,7 @@ class TranslationsCacheWarmer implements CacheWarmerInterface, ServiceSubscriber
     /**
      * {@inheritdoc}
      */
-    public function warmUp($cacheDir)
+    public function warmUp(string $cacheDir)
     {
         if (null === $this->translator) {
             $this->translator = $this->container->get('translator');
@@ -60,8 +60,8 @@ class TranslationsCacheWarmer implements CacheWarmerInterface, ServiceSubscriber
      */
     public static function getSubscribedServices()
     {
-        return array(
+        return [
             'translator' => TranslatorInterface::class,
-        );
+        ];
     }
 }

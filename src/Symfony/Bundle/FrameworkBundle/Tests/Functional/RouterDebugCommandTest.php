@@ -17,58 +17,56 @@ use Symfony\Component\Console\Tester\CommandTester;
 /**
  * @group functional
  */
-class RouterDebugCommandTest extends WebTestCase
+class RouterDebugCommandTest extends AbstractWebTestCase
 {
     private $application;
 
-    protected function setUp()
+    protected function setUp(): void
     {
-        $kernel = static::createKernel(array('test_case' => 'RouterDebug', 'root_config' => 'config.yml'));
+        $kernel = static::createKernel(['test_case' => 'RouterDebug', 'root_config' => 'config.yml']);
         $this->application = new Application($kernel);
     }
 
     public function testDumpAllRoutes()
     {
         $tester = $this->createCommandTester();
-        $ret = $tester->execute(array());
+        $ret = $tester->execute([]);
         $display = $tester->getDisplay();
 
         $this->assertSame(0, $ret, 'Returns 0 in case of success');
-        $this->assertContains('routerdebug_test', $display);
-        $this->assertContains('/test', $display);
-        $this->assertContains('/session', $display);
+        $this->assertStringContainsString('routerdebug_test', $display);
+        $this->assertStringContainsString('/test', $display);
+        $this->assertStringContainsString('/session', $display);
     }
 
     public function testDumpOneRoute()
     {
         $tester = $this->createCommandTester();
-        $ret = $tester->execute(array('name' => 'routerdebug_session_welcome'));
+        $ret = $tester->execute(['name' => 'routerdebug_session_welcome']);
 
         $this->assertSame(0, $ret, 'Returns 0 in case of success');
-        $this->assertContains('routerdebug_session_welcome', $tester->getDisplay());
-        $this->assertContains('/session', $tester->getDisplay());
+        $this->assertStringContainsString('routerdebug_session_welcome', $tester->getDisplay());
+        $this->assertStringContainsString('/session', $tester->getDisplay());
     }
 
     public function testSearchMultipleRoutes()
     {
         $tester = $this->createCommandTester();
-        $tester->setInputs(array(3));
-        $ret = $tester->execute(array('name' => 'routerdebug'), array('interactive' => true));
+        $tester->setInputs([3]);
+        $ret = $tester->execute(['name' => 'routerdebug'], ['interactive' => true]);
 
         $this->assertSame(0, $ret, 'Returns 0 in case of success');
-        $this->assertContains('Select one of the matching routes:', $tester->getDisplay());
-        $this->assertContains('routerdebug_test', $tester->getDisplay());
-        $this->assertContains('/test', $tester->getDisplay());
+        $this->assertStringContainsString('Select one of the matching routes:', $tester->getDisplay());
+        $this->assertStringContainsString('routerdebug_test', $tester->getDisplay());
+        $this->assertStringContainsString('/test', $tester->getDisplay());
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessage The route "gerard" does not exist.
-     */
     public function testSearchWithThrow()
     {
+        $this->expectException('InvalidArgumentException');
+        $this->expectExceptionMessage('The route "gerard" does not exist.');
         $tester = $this->createCommandTester();
-        $tester->execute(array('name' => 'gerard'), array('interactive' => true));
+        $tester->execute(['name' => 'gerard'], ['interactive' => true]);
     }
 
     private function createCommandTester(): CommandTester

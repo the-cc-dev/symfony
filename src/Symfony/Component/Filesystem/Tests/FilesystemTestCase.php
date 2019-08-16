@@ -18,7 +18,7 @@ class FilesystemTestCase extends TestCase
 {
     private $umask;
 
-    protected $longPathNamesWindows = array();
+    protected $longPathNamesWindows = [];
 
     /**
      * @var \Symfony\Component\Filesystem\Filesystem
@@ -31,24 +31,24 @@ class FilesystemTestCase extends TestCase
     protected $workspace = null;
 
     /**
-     * @var null|bool Flag for hard links on Windows
+     * @var bool|null Flag for hard links on Windows
      */
     private static $linkOnWindows = null;
 
     /**
-     * @var null|bool Flag for symbolic links on Windows
+     * @var bool|null Flag for symbolic links on Windows
      */
     private static $symlinkOnWindows = null;
 
-    public static function setUpBeforeClass()
+    public static function setUpBeforeClass(): void
     {
-        if ('\\' === DIRECTORY_SEPARATOR) {
+        if ('\\' === \DIRECTORY_SEPARATOR) {
             self::$linkOnWindows = true;
             $originFile = tempnam(sys_get_temp_dir(), 'li');
             $targetFile = tempnam(sys_get_temp_dir(), 'li');
             if (true !== @link($originFile, $targetFile)) {
                 $report = error_get_last();
-                if (is_array($report) && false !== strpos($report['message'], 'error code(1314)')) {
+                if (\is_array($report) && false !== strpos($report['message'], 'error code(1314)')) {
                     self::$linkOnWindows = false;
                 }
             } else {
@@ -60,7 +60,7 @@ class FilesystemTestCase extends TestCase
             $targetDir = tempnam(sys_get_temp_dir(), 'sl');
             if (true !== @symlink($originDir, $targetDir)) {
                 $report = error_get_last();
-                if (is_array($report) && false !== strpos($report['message'], 'error code(1314)')) {
+                if (\is_array($report) && false !== strpos($report['message'], 'error code(1314)')) {
                     self::$symlinkOnWindows = false;
                 }
             } else {
@@ -69,7 +69,7 @@ class FilesystemTestCase extends TestCase
         }
     }
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->umask = umask(0);
         $this->filesystem = new Filesystem();
@@ -78,13 +78,13 @@ class FilesystemTestCase extends TestCase
         $this->workspace = realpath($this->workspace);
     }
 
-    protected function tearDown()
+    protected function tearDown(): void
     {
         if (!empty($this->longPathNamesWindows)) {
             foreach ($this->longPathNamesWindows as $path) {
                 exec('DEL '.$path);
             }
-            $this->longPathNamesWindows = array();
+            $this->longPathNamesWindows = [];
         }
 
         $this->filesystem->remove($this->workspace);
@@ -129,37 +129,37 @@ class FilesystemTestCase extends TestCase
 
     protected function markAsSkippedIfLinkIsMissing()
     {
-        if (!function_exists('link')) {
+        if (!\function_exists('link')) {
             $this->markTestSkipped('link is not supported');
         }
 
-        if ('\\' === DIRECTORY_SEPARATOR && false === self::$linkOnWindows) {
+        if ('\\' === \DIRECTORY_SEPARATOR && false === self::$linkOnWindows) {
             $this->markTestSkipped('link requires "Create hard links" privilege on windows');
         }
     }
 
     protected function markAsSkippedIfSymlinkIsMissing($relative = false)
     {
-        if ('\\' === DIRECTORY_SEPARATOR && false === self::$symlinkOnWindows) {
+        if ('\\' === \DIRECTORY_SEPARATOR && false === self::$symlinkOnWindows) {
             $this->markTestSkipped('symlink requires "Create symbolic links" privilege on Windows');
         }
 
-        // https://bugs.php.net/bug.php?id=69473
-        if ($relative && '\\' === DIRECTORY_SEPARATOR && 1 === PHP_ZTS) {
+        // https://bugs.php.net/69473
+        if ($relative && '\\' === \DIRECTORY_SEPARATOR && 1 === PHP_ZTS) {
             $this->markTestSkipped('symlink does not support relative paths on thread safe Windows PHP versions');
         }
     }
 
     protected function markAsSkippedIfChmodIsMissing()
     {
-        if ('\\' === DIRECTORY_SEPARATOR) {
+        if ('\\' === \DIRECTORY_SEPARATOR) {
             $this->markTestSkipped('chmod is not supported on Windows');
         }
     }
 
     protected function markAsSkippedIfPosixIsMissing()
     {
-        if (!function_exists('posix_isatty')) {
+        if (!\function_exists('posix_isatty')) {
             $this->markTestSkipped('Function posix_isatty is required.');
         }
     }

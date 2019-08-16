@@ -12,37 +12,42 @@
 namespace Symfony\Component\Form\Extension\Core\Type;
 
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Exception\InvalidConfigurationException;
+use Symfony\Component\Form\Exception\LogicException;
+use Symfony\Component\Form\Extension\Core\DataTransformer\DateTimeImmutableToDateTimeTransformer;
+use Symfony\Component\Form\Extension\Core\DataTransformer\DateTimeToArrayTransformer;
+use Symfony\Component\Form\Extension\Core\DataTransformer\DateTimeToStringTransformer;
+use Symfony\Component\Form\Extension\Core\DataTransformer\DateTimeToTimestampTransformer;
+use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
 use Symfony\Component\Form\FormInterface;
-use Symfony\Component\Form\FormBuilderInterface;
-use Symfony\Component\Form\ReversedTransformer;
-use Symfony\Component\Form\Exception\InvalidConfigurationException;
-use Symfony\Component\Form\Extension\Core\DataTransformer\DateTimeImmutableToDateTimeTransformer;
-use Symfony\Component\Form\Extension\Core\DataTransformer\DateTimeToStringTransformer;
-use Symfony\Component\Form\Extension\Core\DataTransformer\DateTimeToTimestampTransformer;
-use Symfony\Component\Form\Extension\Core\DataTransformer\DateTimeToArrayTransformer;
 use Symfony\Component\Form\FormView;
+use Symfony\Component\Form\ReversedTransformer;
 use Symfony\Component\OptionsResolver\Options;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 class TimeType extends AbstractType
 {
-    private static $widgets = array(
+    private static $widgets = [
         'text' => 'Symfony\Component\Form\Extension\Core\Type\TextType',
         'choice' => 'Symfony\Component\Form\Extension\Core\Type\ChoiceType',
-    );
+    ];
 
     /**
      * {@inheritdoc}
      */
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
-        $parts = array('hour');
+        $parts = ['hour'];
         $format = 'H';
 
         if ($options['with_seconds'] && !$options['with_minutes']) {
             throw new InvalidConfigurationException('You can not disable minutes if you have enabled seconds.');
+        }
+
+        if (null !== $options['reference_date'] && $options['reference_date']->getTimezone()->getName() !== $options['model_timezone']) {
+            throw new InvalidConfigurationException(sprintf('The configured "model_timezone" (%s) must match the timezone of the "reference_date" (%s).', $options['model_timezone'], $options['reference_date']->getTimezone()->getName()));
         }
 
         if ($options['with_minutes']) {
@@ -56,8 +61,6 @@ class TimeType extends AbstractType
         }
 
         if ('single_text' === $options['widget']) {
-            $builder->addViewTransformer(new DateTimeToStringTransformer($options['model_timezone'], $options['view_timezone'], $format));
-
             // handle seconds ignored by user's browser when with_seconds enabled
             // https://codereview.chromium.org/450533009/
             if ($options['with_seconds']) {
@@ -68,13 +71,47 @@ class TimeType extends AbstractType
                     }
                 });
             }
+
+            if (null !== $options['reference_date']) {
+                $format = 'Y-m-d '.$format;
+
+                $builder->addEventListener(FormEvents::PRE_SUBMIT, function (FormEvent $event) use ($options) {
+                    $data = $event->getData();
+
+                    if (preg_match('/^\d{2}:\d{2}(:\d{2})?$/', $data)) {
+                        $event->setData($options['reference_date']->format('Y-m-d ').$data);
+                    }
+                });
+            }
+
+            $builder->addViewTransformer(new DateTimeToStringTransformer($options['model_timezone'], $options['view_timezone'], $format));
         } else {
-            $hourOptions = $minuteOptions = $secondOptions = array(
+            $hourOptions = $minuteOptions = $secondOptions = [
                 'error_bubbling' => true,
-            );
+                'empty_data' => '',
+            ];
+            // when the form is compound the entries of the array are ignored in favor of children data
+            // so we need to handle the cascade setting here
+            $emptyData = $builder->getEmptyData() ?: [];
+
+            if (isset($emptyData['hour'])) {
+                $hourOptions['empty_data'] = $emptyData['hour'];
+            }
+
+            if (isset($options['invalid_message'])) {
+                $hourOptions['invalid_message'] = $options['invalid_message'];
+                $minuteOptions['invalid_message'] = $options['invalid_message'];
+                $secondOptions['invalid_message'] = $options['invalid_message'];
+            }
+
+            if (isset($options['invalid_message_parameters'])) {
+                $hourOptions['invalid_message_parameters'] = $options['invalid_message_parameters'];
+                $minuteOptions['invalid_message_parameters'] = $options['invalid_message_parameters'];
+                $secondOptions['invalid_message_parameters'] = $options['invalid_message_parameters'];
+            }
 
             if ('choice' === $options['widget']) {
-                $hours = $minutes = array();
+                $hours = $minutes = [];
 
                 foreach ($options['hours'] as $hour) {
                     $hours[str_pad($hour, 2, '0', STR_PAD_LEFT)] = $hour;
@@ -96,7 +133,7 @@ class TimeType extends AbstractType
                 }
 
                 if ($options['with_seconds']) {
-                    $seconds = array();
+                    $seconds = [];
 
                     foreach ($options['seconds'] as $second) {
                         $seconds[str_pad($second, 2, '0', STR_PAD_LEFT)] = $second;
@@ -108,7 +145,7 @@ class TimeType extends AbstractType
                 }
 
                 // Append generic carry-along options
-                foreach (array('required', 'translation_domain') as $passOpt) {
+                foreach (['required', 'translation_domain'] as $passOpt) {
                     $hourOptions[$passOpt] = $options[$passOpt];
 
                     if ($options['with_minutes']) {
@@ -124,21 +161,27 @@ class TimeType extends AbstractType
             $builder->add('hour', self::$widgets[$options['widget']], $hourOptions);
 
             if ($options['with_minutes']) {
+                if (isset($emptyData['minute'])) {
+                    $minuteOptions['empty_data'] = $emptyData['minute'];
+                }
                 $builder->add('minute', self::$widgets[$options['widget']], $minuteOptions);
             }
 
             if ($options['with_seconds']) {
+                if (isset($emptyData['second'])) {
+                    $secondOptions['empty_data'] = $emptyData['second'];
+                }
                 $builder->add('second', self::$widgets[$options['widget']], $secondOptions);
             }
 
-            $builder->addViewTransformer(new DateTimeToArrayTransformer($options['model_timezone'], $options['view_timezone'], $parts, 'text' === $options['widget']));
+            $builder->addViewTransformer(new DateTimeToArrayTransformer($options['model_timezone'], $options['view_timezone'], $parts, 'text' === $options['widget'], $options['reference_date']));
         }
 
         if ('datetime_immutable' === $options['input']) {
             $builder->addModelTransformer(new DateTimeImmutableToDateTimeTransformer());
         } elseif ('string' === $options['input']) {
             $builder->addModelTransformer(new ReversedTransformer(
-                new DateTimeToStringTransformer($options['model_timezone'], $options['model_timezone'], 'H:i:s')
+                new DateTimeToStringTransformer($options['model_timezone'], $options['model_timezone'], $options['input_format'])
             ));
         } elseif ('timestamp' === $options['input']) {
             $builder->addModelTransformer(new ReversedTransformer(
@@ -156,11 +199,11 @@ class TimeType extends AbstractType
      */
     public function buildView(FormView $view, FormInterface $form, array $options)
     {
-        $view->vars = array_replace($view->vars, array(
+        $view->vars = array_replace($view->vars, [
             'widget' => $options['widget'],
             'with_minutes' => $options['with_minutes'],
             'with_seconds' => $options['with_seconds'],
-        ));
+        ]);
 
         // Change the input to a HTML5 time input if
         //  * the widget is set to "single_text"
@@ -192,49 +235,63 @@ class TimeType extends AbstractType
         };
 
         $placeholderNormalizer = function (Options $options, $placeholder) use ($placeholderDefault) {
-            if (is_array($placeholder)) {
+            if (\is_array($placeholder)) {
                 $default = $placeholderDefault($options);
 
                 return array_merge(
-                    array('hour' => $default, 'minute' => $default, 'second' => $default),
+                    ['hour' => $default, 'minute' => $default, 'second' => $default],
                     $placeholder
                 );
             }
 
-            return array(
+            return [
                 'hour' => $placeholder,
                 'minute' => $placeholder,
                 'second' => $placeholder,
-            );
+            ];
         };
 
         $choiceTranslationDomainNormalizer = function (Options $options, $choiceTranslationDomain) {
-            if (is_array($choiceTranslationDomain)) {
+            if (\is_array($choiceTranslationDomain)) {
                 $default = false;
 
                 return array_replace(
-                    array('hour' => $default, 'minute' => $default, 'second' => $default),
+                    ['hour' => $default, 'minute' => $default, 'second' => $default],
                     $choiceTranslationDomain
                 );
             }
 
-            return array(
+            return [
                 'hour' => $choiceTranslationDomain,
                 'minute' => $choiceTranslationDomain,
                 'second' => $choiceTranslationDomain,
-            );
+            ];
         };
 
-        $resolver->setDefaults(array(
+        $modelTimezone = static function (Options $options, $value): ?string {
+            if (null !== $value) {
+                return $value;
+            }
+
+            if (null !== $options['reference_date']) {
+                return $options['reference_date']->getTimezone()->getName();
+            }
+
+            return null;
+        };
+
+        $resolver->setDefaults([
             'hours' => range(0, 23),
             'minutes' => range(0, 59),
             'seconds' => range(0, 59),
             'widget' => 'choice',
             'input' => 'datetime',
+            'input_format' => 'H:i:s',
             'with_minutes' => true,
             'with_seconds' => false,
-            'model_timezone' => null,
+            'model_timezone' => $modelTimezone,
             'view_timezone' => null,
+            'reference_date' => null,
             'placeholder' => $placeholderDefault,
             'html5' => true,
             // Don't modify \DateTime classes by reference, we treat
@@ -246,29 +303,44 @@ class TimeType extends AbstractType
             // representation is not \DateTime, but an array, we need to unset
             // this option.
             'data_class' => null,
+            'empty_data' => function (Options $options) {
+                return $options['compound'] ? [] : '';
+            },
             'compound' => $compound,
             'choice_translation_domain' => false,
-        ));
+        ]);
+
+        $resolver->setNormalizer('model_timezone', function (Options $options, $modelTimezone): ?string {
+            if (null !== $modelTimezone && $options['view_timezone'] !== $modelTimezone && null === $options['reference_date']) {
+                throw new LogicException(sprintf('Using different values for the "model_timezone" and "view_timezone" options without configuring a reference date is not supported.'));
+            }
+
+            return $modelTimezone;
+        });
 
         $resolver->setNormalizer('placeholder', $placeholderNormalizer);
         $resolver->setNormalizer('choice_translation_domain', $choiceTranslationDomainNormalizer);
 
-        $resolver->setAllowedValues('input', array(
+        $resolver->setAllowedValues('input', [
             'datetime',
             'datetime_immutable',
             'string',
             'timestamp',
             'array',
-        ));
-        $resolver->setAllowedValues('widget', array(
+        ]);
+        $resolver->setAllowedValues('widget', [
             'single_text',
             'text',
             'choice',
-        ));
+        ]);
 
         $resolver->setAllowedTypes('hours', 'array');
         $resolver->setAllowedTypes('minutes', 'array');
         $resolver->setAllowedTypes('seconds', 'array');
+        $resolver->setAllowedTypes('input_format', 'string');
+        $resolver->setAllowedTypes('model_timezone', ['null', 'string']);
+        $resolver->setAllowedTypes('view_timezone', ['null', 'string']);
+        $resolver->setAllowedTypes('reference_date', ['null', \DateTimeInterface::class]);
     }
 
     /**

@@ -11,7 +11,9 @@
 
 namespace Symfony\Component\Messenger\Middleware;
 
+use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\Exception\ValidationFailedException;
+use Symfony\Component\Messenger\Stamp\ValidationStamp;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
@@ -26,13 +28,23 @@ class ValidationMiddleware implements MiddlewareInterface
         $this->validator = $validator;
     }
 
-    public function handle($message, callable $next)
+    /**
+     * {@inheritdoc}
+     */
+    public function handle(Envelope $envelope, StackInterface $stack): Envelope
     {
-        $violations = $this->validator->validate($message);
+        $message = $envelope->getMessage();
+        $groups = null;
+        /** @var ValidationStamp|null $validationStamp */
+        if ($validationStamp = $envelope->last(ValidationStamp::class)) {
+            $groups = $validationStamp->getGroups();
+        }
+
+        $violations = $this->validator->validate($message, null, $groups);
         if (\count($violations)) {
             throw new ValidationFailedException($message, $violations);
         }
 
-        return $next($message);
+        return $stack->next()->handle($envelope, $stack);
     }
 }

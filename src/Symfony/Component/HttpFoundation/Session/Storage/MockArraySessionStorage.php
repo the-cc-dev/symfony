@@ -50,7 +50,7 @@ class MockArraySessionStorage implements SessionStorageInterface
     /**
      * @var array
      */
-    protected $data = array();
+    protected $data = [];
 
     /**
      * @var MetadataBag
@@ -60,7 +60,7 @@ class MockArraySessionStorage implements SessionStorageInterface
     /**
      * @var array|SessionBagInterface[]
      */
-    protected $bags = array();
+    protected $bags = [];
 
     public function __construct(string $name = 'MOCKSESSID', MetadataBag $metaBag = null)
     {
@@ -94,7 +94,7 @@ class MockArraySessionStorage implements SessionStorageInterface
     /**
      * {@inheritdoc}
      */
-    public function regenerate($destroy = false, $lifetime = null)
+    public function regenerate(bool $destroy = false, int $lifetime = null)
     {
         if (!$this->started) {
             $this->start();
@@ -117,7 +117,7 @@ class MockArraySessionStorage implements SessionStorageInterface
     /**
      * {@inheritdoc}
      */
-    public function setId($id)
+    public function setId(string $id)
     {
         if ($this->started) {
             throw new \LogicException('Cannot set session ID after the session has started.');
@@ -137,7 +137,7 @@ class MockArraySessionStorage implements SessionStorageInterface
     /**
      * {@inheritdoc}
      */
-    public function setName($name)
+    public function setName(string $name)
     {
         $this->name = $name;
     }
@@ -166,7 +166,7 @@ class MockArraySessionStorage implements SessionStorageInterface
         }
 
         // clear out the session
-        $this->data = array();
+        $this->data = [];
 
         // reconnect the bags to the session
         $this->loadSession();
@@ -183,7 +183,7 @@ class MockArraySessionStorage implements SessionStorageInterface
     /**
      * {@inheritdoc}
      */
-    public function getBag($name)
+    public function getBag(string $name)
     {
         if (!isset($this->bags[$name])) {
             throw new \InvalidArgumentException(sprintf('The SessionBagInterface %s is not registered.', $name));
@@ -238,11 +238,11 @@ class MockArraySessionStorage implements SessionStorageInterface
 
     protected function loadSession()
     {
-        $bags = array_merge($this->bags, array($this->metadataBag));
+        $bags = array_merge($this->bags, [$this->metadataBag]);
 
         foreach ($bags as $bag) {
             $key = $bag->getStorageKey();
-            $this->data[$key] = isset($this->data[$key]) ? $this->data[$key] : array();
+            $this->data[$key] = isset($this->data[$key]) ? $this->data[$key] : [];
             $bag->initialize($this->data[$key]);
         }
 

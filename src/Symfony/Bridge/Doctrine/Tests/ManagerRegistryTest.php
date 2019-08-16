@@ -17,7 +17,7 @@ use Symfony\Bridge\ProxyManager\Tests\LazyProxy\Dumper\PhpDumperTest;
 
 class ManagerRegistryTest extends TestCase
 {
-    public static function setUpBeforeClass()
+    public static function setUpBeforeClass(): void
     {
         if (!class_exists('PHPUnit_Framework_TestCase')) {
             self::markTestSkipped('proxy-manager-bridge is not yet compatible with namespaced phpunit versions.');
@@ -30,7 +30,7 @@ class ManagerRegistryTest extends TestCase
     {
         $container = new \LazyServiceProjectServiceContainer();
 
-        $registry = new TestManagerRegistry('name', array(), array('defaultManager' => 'foo'), 'defaultConnection', 'defaultManager', 'proxyInterfaceName');
+        $registry = new TestManagerRegistry('name', [], ['defaultManager' => 'foo'], 'defaultConnection', 'defaultManager', 'proxyInterfaceName');
         $registry->setTestContainer($container);
 
         $foo = $container->get('foo');

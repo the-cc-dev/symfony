@@ -19,12 +19,12 @@ class TemplateNameParserTest extends TestCase
 {
     protected $parser;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->parser = new TemplateNameParser();
     }
 
-    protected function tearDown()
+    protected function tearDown(): void
     {
         $this->parser = null;
     }
@@ -42,10 +42,10 @@ class TemplateNameParserTest extends TestCase
 
     public function getLogicalNameToTemplateProvider()
     {
-        return array(
-            array('/path/to/section/name.engine', new TemplateReference('/path/to/section/name.engine', 'engine')),
-            array('name.engine', new TemplateReference('name.engine', 'engine')),
-            array('name', new TemplateReference('name')),
-        );
+        return [
+            ['/path/to/section/name.engine', new TemplateReference('/path/to/section/name.engine', 'engine')],
+            ['name.engine', new TemplateReference('name.engine', 'engine')],
+            ['name', new TemplateReference('name')],
+        ];
     }
 }

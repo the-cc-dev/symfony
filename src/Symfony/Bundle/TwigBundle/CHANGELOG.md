@@ -1,6 +1,30 @@
 CHANGELOG
 =========
 
+5.0.0
+-----
+
+ * updated default value for the `strict_variables` option to `%kernel.debug%` parameter
+ * removed support to load templates from the legacy directories `src/Resources/views/` and `src/Resources/<BundleName>/views/`
+ * removed `TwigEngine` class, use `Twig\Environment` instead
+ * removed `FilesystemLoader` and `NativeFilesystemLoader`, use Twig notation for templates instead
+ * updated default value for the `twig.exception_controller` option to `null`
+ * removed `ExceptionController` class and all built-in error templates in favor of the new error renderer mechanism
+
+4.4.0
+-----
+
+ * marked the `TemplateIterator` as `internal`
+ * added HTML comment to beginning and end of `exception_full.html.twig`
+ * added a new `TwigHtmlErrorRenderer` for `html` format, integrated with the `ErrorRenderer` component 
+ * deprecated `ExceptionController` class and all built-in error templates in favor of the new error renderer mechanism
+ * deprecated default value `twig.controller.exception::showAction` of `twig.exception_controller` configuration option, set it to `null` instead
+
+4.2.0
+-----
+
+ * deprecated support for legacy templates directories `src/Resources/views/` and `src/Resources/<BundleName>/views/`, use `templates/` and `templates/bundles/<BundleName>/` instead.
+
 4.1.0
 -----
 

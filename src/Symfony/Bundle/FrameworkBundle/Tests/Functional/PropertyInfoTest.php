@@ -13,13 +13,13 @@ namespace Symfony\Bundle\FrameworkBundle\Tests\Functional;
 
 use Symfony\Component\PropertyInfo\Type;
 
-class PropertyInfoTest extends WebTestCase
+class PropertyInfoTest extends AbstractWebTestCase
 {
     public function testPhpDocPriority()
     {
-        static::bootKernel(array('test_case' => 'Serializer'));
+        static::bootKernel(['test_case' => 'Serializer']);
 
-        $this->assertEquals(array(new Type(Type::BUILTIN_TYPE_ARRAY, false, null, true, new Type(Type::BUILTIN_TYPE_INT), new Type(Type::BUILTIN_TYPE_INT))), static::$container->get('property_info')->getTypes('Symfony\Bundle\FrameworkBundle\Tests\Functional\Dummy', 'codes'));
+        $this->assertEquals([new Type(Type::BUILTIN_TYPE_ARRAY, false, null, true, new Type(Type::BUILTIN_TYPE_INT), new Type(Type::BUILTIN_TYPE_INT))], static::$container->get('property_info')->getTypes('Symfony\Bundle\FrameworkBundle\Tests\Functional\Dummy', 'codes'));
     }
 }
 

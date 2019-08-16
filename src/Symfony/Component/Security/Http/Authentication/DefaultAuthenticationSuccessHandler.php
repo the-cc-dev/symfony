@@ -11,11 +11,11 @@
 
 namespace Symfony\Component\Security\Http\Authentication;
 
-use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Security\Http\Util\TargetPathTrait;
+use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Http\HttpUtils;
 use Symfony\Component\Security\Http\ParameterBagUtils;
+use Symfony\Component\Security\Http\Util\TargetPathTrait;
 
 /**
  * Class with the default authentication success handling logic.
@@ -31,19 +31,18 @@ class DefaultAuthenticationSuccessHandler implements AuthenticationSuccessHandle
     protected $httpUtils;
     protected $options;
     protected $providerKey;
-    protected $defaultOptions = array(
+    protected $defaultOptions = [
         'always_use_default_target_path' => false,
         'default_target_path' => '/',
         'login_path' => '/login',
         'target_path_parameter' => '_target_path',
         'use_referer' => false,
-    );
+    ];
 
     /**
-     * @param HttpUtils $httpUtils
-     * @param array     $options   Options for processing a successful authentication attempt
+     * @param array $options Options for processing a successful authentication attempt
      */
-    public function __construct(HttpUtils $httpUtils, array $options = array())
+    public function __construct(HttpUtils $httpUtils, array $options = [])
     {
         $this->httpUtils = $httpUtils;
         $this->setOptions($options);
@@ -82,12 +81,7 @@ class DefaultAuthenticationSuccessHandler implements AuthenticationSuccessHandle
         return $this->providerKey;
     }
 
-    /**
-     * Set the provider key.
-     *
-     * @param string $providerKey
-     */
-    public function setProviderKey($providerKey)
+    public function setProviderKey(string $providerKey)
     {
         $this->providerKey = $providerKey;
     }

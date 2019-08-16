@@ -11,6 +11,8 @@
 
 namespace Symfony\Component\Security\Core\Authentication;
 
+use Symfony\Component\Security\Core\Authentication\Token\AnonymousToken;
+use Symfony\Component\Security\Core\Authentication\Token\RememberMeToken;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 
 /**
@@ -20,15 +22,6 @@ use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
  */
 class AuthenticationTrustResolver implements AuthenticationTrustResolverInterface
 {
-    private $anonymousClass;
-    private $rememberMeClass;
-
-    public function __construct(string $anonymousClass, string $rememberMeClass)
-    {
-        $this->anonymousClass = $anonymousClass;
-        $this->rememberMeClass = $rememberMeClass;
-    }
-
     /**
      * {@inheritdoc}
      */
@@ -38,7 +31,7 @@ class AuthenticationTrustResolver implements AuthenticationTrustResolverInterfac
             return false;
         }
 
-        return $token instanceof $this->anonymousClass;
+        return $token instanceof AnonymousToken;
     }
 
     /**
@@ -50,7 +43,7 @@ class AuthenticationTrustResolver implements AuthenticationTrustResolverInterfac
             return false;
         }
 
-        return $token instanceof $this->rememberMeClass;
+        return $token instanceof RememberMeToken;
     }
 
     /**

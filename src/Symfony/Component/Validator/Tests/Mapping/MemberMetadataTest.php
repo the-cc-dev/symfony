@@ -22,7 +22,7 @@ class MemberMetadataTest extends TestCase
 {
     protected $metadata;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->metadata = new TestMemberMetadata(
             'Symfony\Component\Validator\Tests\Fixtures\Entity',
@@ -31,22 +31,22 @@ class MemberMetadataTest extends TestCase
         );
     }
 
-    protected function tearDown()
+    protected function tearDown(): void
     {
         $this->metadata = null;
     }
 
     public function testAddConstraintRequiresClassConstraints()
     {
-        $this->{method_exists($this, $_ = 'expectException') ? $_ : 'setExpectedException'}('Symfony\Component\Validator\Exception\ConstraintDefinitionException');
+        $this->expectException('Symfony\Component\Validator\Exception\ConstraintDefinitionException');
 
         $this->metadata->addConstraint(new ClassConstraint());
     }
 
     public function testSerialize()
     {
-        $this->metadata->addConstraint(new ConstraintA(array('property1' => 'A')));
-        $this->metadata->addConstraint(new ConstraintB(array('groups' => 'TestGroup')));
+        $this->metadata->addConstraint(new ConstraintA(['property1' => 'A']));
+        $this->metadata->addConstraint(new ConstraintB(['groups' => 'TestGroup']));
 
         $metadata = unserialize(serialize($this->metadata));
 
@@ -55,7 +55,7 @@ class MemberMetadataTest extends TestCase
 
     public function testSerializeCollectionCascaded()
     {
-        $this->metadata->addConstraint(new Valid(array('traverse' => true)));
+        $this->metadata->addConstraint(new Valid(['traverse' => true]));
 
         $metadata = unserialize(serialize($this->metadata));
 
@@ -64,7 +64,7 @@ class MemberMetadataTest extends TestCase
 
     public function testSerializeCollectionNotCascaded()
     {
-        $this->metadata->addConstraint(new Valid(array('traverse' => false)));
+        $this->metadata->addConstraint(new Valid(['traverse' => false]));
 
         $metadata = unserialize(serialize($this->metadata));
 

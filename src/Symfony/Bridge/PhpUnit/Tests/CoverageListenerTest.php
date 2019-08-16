@@ -12,7 +12,7 @@ class CoverageListenerTest extends TestCase
             $this->markTestSkipped('This test cannot be run on Windows.');
         }
 
-        exec('type phpdbg', $output, $returnCode);
+        exec('type phpdbg 2> /dev/null', $output, $returnCode);
 
         if (\PHP_VERSION_ID >= 70000 && 0 === $returnCode) {
             $php = 'phpdbg -qrr';
@@ -27,16 +27,16 @@ class CoverageListenerTest extends TestCase
         $dir = __DIR__.'/../Tests/Fixtures/coverage';
         $phpunit = $_SERVER['argv'][0];
 
-        exec("$php $phpunit -c $dir/phpunit-without-listener.xml.dist $dir/tests/ --coverage-text", $output);
+        exec("$php $phpunit -c $dir/phpunit-without-listener.xml.dist $dir/tests/ --coverage-text 2> /dev/null", $output);
         $output = implode("\n", $output);
-        $this->assertContains('FooCov', $output);
+        $this->assertStringContainsString('FooCov', $output);
 
-        exec("$php $phpunit -c $dir/phpunit-with-listener.xml.dist $dir/tests/ --coverage-text", $output);
+        exec("$php $phpunit -c $dir/phpunit-with-listener.xml.dist $dir/tests/ --coverage-text 2> /dev/null", $output);
         $output = implode("\n", $output);
-        $this->assertNotContains('FooCov', $output);
-        $this->assertContains("SutNotFoundTest::test\nCould not find the tested class.", $output);
-        $this->assertNotContains("CoversTest::test\nCould not find the tested class.", $output);
-        $this->assertNotContains("CoversDefaultClassTest::test\nCould not find the tested class.", $output);
-        $this->assertNotContains("CoversNothingTest::test\nCould not find the tested class.", $output);
+        $this->assertStringNotContainsString('FooCov', $output);
+        $this->assertStringContainsString("SutNotFoundTest::test\nCould not find the tested class.", $output);
+        $this->assertStringNotContainsString("CoversTest::test\nCould not find the tested class.", $output);
+        $this->assertStringNotContainsString("CoversDefaultClassTest::test\nCould not find the tested class.", $output);
+        $this->assertStringNotContainsString("CoversNothingTest::test\nCould not find the tested class.", $output);
     }
 }

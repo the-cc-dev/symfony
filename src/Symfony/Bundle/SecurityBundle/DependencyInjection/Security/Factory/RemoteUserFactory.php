@@ -24,7 +24,7 @@ use Symfony\Component\DependencyInjection\Reference;
  */
 class RemoteUserFactory implements SecurityFactoryInterface
 {
-    public function create(ContainerBuilder $container, $id, $config, $userProvider, $defaultEntryPoint)
+    public function create(ContainerBuilder $container, string $id, array $config, string $userProvider, ?string $defaultEntryPoint)
     {
         $providerId = 'security.authentication.provider.pre_authenticated.'.$id;
         $container
@@ -38,8 +38,9 @@ class RemoteUserFactory implements SecurityFactoryInterface
         $listener = $container->setDefinition($listenerId, new ChildDefinition('security.authentication.listener.remote_user'));
         $listener->replaceArgument(2, $id);
         $listener->replaceArgument(3, $config['user']);
+        $listener->addMethodCall('setSessionAuthenticationStrategy', [new Reference('security.authentication.session_strategy.'.$id)]);
 
-        return array($providerId, $listenerId, $defaultEntryPoint);
+        return [$providerId, $listenerId, $defaultEntryPoint];
     }
 
     public function getPosition()

@@ -17,6 +17,7 @@ use Symfony\Component\VarDumper\Dumper\HtmlDumper;
 use Twig\Environment;
 use Twig\Extension\AbstractExtension;
 use Twig\Template;
+use Twig\TokenParser\TokenParserInterface;
 use Twig\TwigFunction;
 
 /**
@@ -35,16 +36,22 @@ class DumpExtension extends AbstractExtension
         $this->dumper = $dumper;
     }
 
+    /**
+     * @return TwigFunction[]
+     */
     public function getFunctions()
     {
-        return array(
-            new TwigFunction('dump', array($this, 'dump'), array('is_safe' => array('html'), 'needs_context' => true, 'needs_environment' => true)),
-        );
+        return [
+            new TwigFunction('dump', [$this, 'dump'], ['is_safe' => ['html'], 'needs_context' => true, 'needs_environment' => true]),
+        ];
     }
 
+    /**
+     * @return TokenParserInterface[]
+     */
     public function getTokenParsers()
     {
-        return array(new DumpTokenParser());
+        return [new DumpTokenParser()];
     }
 
     public function getName()
@@ -52,23 +59,23 @@ class DumpExtension extends AbstractExtension
         return 'dump';
     }
 
-    public function dump(Environment $env, $context)
+    public function dump(Environment $env, array $context)
     {
         if (!$env->isDebug()) {
             return;
         }
 
-        if (2 === func_num_args()) {
-            $vars = array();
+        if (2 === \func_num_args()) {
+            $vars = [];
             foreach ($context as $key => $value) {
                 if (!$value instanceof Template) {
                     $vars[$key] = $value;
                 }
             }
 
-            $vars = array($vars);
+            $vars = [$vars];
         } else {
-            $vars = func_get_args();
+            $vars = \func_get_args();
             unset($vars[0], $vars[1]);
         }
 

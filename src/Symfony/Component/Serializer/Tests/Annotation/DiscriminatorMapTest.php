@@ -21,47 +21,39 @@ class DiscriminatorMapTest extends TestCase
 {
     public function testGetTypePropertyAndMapping()
     {
-        $annotation = new DiscriminatorMap(array('typeProperty' => 'type', 'mapping' => array(
+        $annotation = new DiscriminatorMap(['typeProperty' => 'type', 'mapping' => [
             'foo' => 'FooClass',
             'bar' => 'BarClass',
-        )));
+        ]]);
 
         $this->assertEquals('type', $annotation->getTypeProperty());
-        $this->assertEquals(array(
+        $this->assertEquals([
             'foo' => 'FooClass',
             'bar' => 'BarClass',
-        ), $annotation->getMapping());
+        ], $annotation->getMapping());
     }
 
-    /**
-     * @expectedException \Symfony\Component\Serializer\Exception\InvalidArgumentException
-     */
     public function testExceptionWithoutTypeProperty()
     {
-        new DiscriminatorMap(array('mapping' => array('foo' => 'FooClass')));
+        $this->expectException('Symfony\Component\Serializer\Exception\InvalidArgumentException');
+        new DiscriminatorMap(['mapping' => ['foo' => 'FooClass']]);
     }
 
-    /**
-     * @expectedException \Symfony\Component\Serializer\Exception\InvalidArgumentException
-     */
     public function testExceptionWithEmptyTypeProperty()
     {
-        new DiscriminatorMap(array('typeProperty' => '', 'mapping' => array('foo' => 'FooClass')));
+        $this->expectException('Symfony\Component\Serializer\Exception\InvalidArgumentException');
+        new DiscriminatorMap(['typeProperty' => '', 'mapping' => ['foo' => 'FooClass']]);
     }
 
-    /**
-     * @expectedException \Symfony\Component\Serializer\Exception\InvalidArgumentException
-     */
     public function testExceptionWithoutMappingProperty()
     {
-        new DiscriminatorMap(array('typeProperty' => 'type'));
+        $this->expectException('Symfony\Component\Serializer\Exception\InvalidArgumentException');
+        new DiscriminatorMap(['typeProperty' => 'type']);
     }
 
-    /**
-     * @expectedException \Symfony\Component\Serializer\Exception\InvalidArgumentException
-     */
     public function testExceptionWitEmptyMappingProperty()
     {
-        new DiscriminatorMap(array('typeProperty' => 'type', 'mapping' => array()));
+        $this->expectException('Symfony\Component\Serializer\Exception\InvalidArgumentException');
+        new DiscriminatorMap(['typeProperty' => 'type', 'mapping' => []]);
     }
 }
